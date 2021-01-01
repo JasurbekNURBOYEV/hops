@@ -4,9 +4,9 @@
 
 import json
 from dreamgraph import LogIn
-from files import File as f
-from globals import *
-from tools import log
+from service.files import File as f
+from service.globals import *
+from service.tools import log
 
 
 client = LogIn(telegraph_token)

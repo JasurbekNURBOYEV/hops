@@ -2,7 +2,7 @@
 # this file is the most ugly one, it is highly recommended to close this file right now
 # thanks
 
-from globals import botlink
+from service.globals import botlink
 
 source = {
     "keys": ["olma", "yo'lbars", "ruchka", "wifi", "kitob", "toshbaqa", "kaktus", "hamkorlik", "hayot", "kema",

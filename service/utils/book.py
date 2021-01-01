@@ -2,13 +2,13 @@
 # You are not gonna touch any bit of the code,
 # otherwise you'll have to deal with tons of nightmares, trust me
 
-from globals import *
+from service.globals import *
 import json
 import time
-from files import File as f
+from service.files import File as f
 from datetime import datetime, timedelta
 from dreamgraph import LogIn
-from tools import log
+from service.tools import log
 
 client = LogIn('b3ece8779d454736c76d48b288028a250ec7bf5f25e75d897110826ade2d')
 

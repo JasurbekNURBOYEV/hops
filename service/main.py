@@ -12,14 +12,13 @@
 from time import sleep
 from telebot import types
 import random
-import tools
-from rex import run
-import telegraph
-from tools import *
-import book
-from files import File as f
-from strings import get_string
-from globals import *
+from service.utils.rex import run
+from service.tools import *
+from service import tools
+from service.utils import telegraph, book
+from service.files import File as f
+from service.strings import get_string
+from service.globals import *
 
 
 def is_restricted(cid, uid):

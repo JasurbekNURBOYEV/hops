@@ -7,7 +7,7 @@
 
 import os
 import errno
-from globals import dev, should_log, bot
+from service.globals import dev, should_log, bot
 
 
 def log(*data):

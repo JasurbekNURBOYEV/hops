@@ -7,20 +7,19 @@ import json
 
 
 def run(lang, code):
-    
     languages = {
-     'python': 24,
-     'python2': 5,
-     'python3': 24,
-     'php': 8
+        'python': 24,
+        'python2': 5,
+        'python3': 24,
+        'php': 8
     }
-    
+
     try:
-     if type(lang) == str:
-      lang = languages[lang]
+        if type(lang) == str:
+            lang = languages[lang]
     except:
-     raise ValueError("Couldn't find the language: {}".format(lang))
-     
+        raise ValueError("Couldn't find the language: {}".format(lang))
+
     class Rex:
         errors = result = stats = str
         success = bool

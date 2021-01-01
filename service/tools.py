@@ -5,8 +5,8 @@ Necessary tools
 import json
 from datetime import *
 import re
-from files import File as f
-from globals import bot, dev, should_log
+from service.files import File as f
+from service.globals import bot, dev, should_log
 
 
 def log(*data):

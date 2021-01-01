@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  core:
+    build: .
+    ports:
+      - '1243:1243'
+    command: daphne -b 0.0.0.0 -p 1243 service.service.asgi:application
+    env_file:
+      - .env

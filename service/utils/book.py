@@ -8,7 +8,7 @@ import time
 from service.files import File as f
 from datetime import datetime, timedelta
 from dreamgraph import LogIn
-from service.tools import log
+from service.utils.tools import log
 
 client = LogIn('b3ece8779d454736c76d48b288028a250ec7bf5f25e75d897110826ade2d')
 

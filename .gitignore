@@ -2,3 +2,4 @@
 *.env
 **/migrations/**
 .idea/
+*.sqlite3

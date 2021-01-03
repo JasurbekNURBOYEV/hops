@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 PRODUCTION_MODE = os.environ.get('PROD', False)
 DEBUG = not PRODUCTION_MODE
 
-ALLOWED_HOSTS = [os.environ.get('HOST')]
+ALLOWED_HOSTS = os.environ.get('HOSTS').split('\,')
 
 
 # Application definition
@@ -123,7 +123,7 @@ STATIC_URL = '/static/'
 
 # HOPS-SPECIFIC CONFIGS
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
-MAIN_GROUP_ID = os.environ.get('MAIN_GROUP_ID')
-TEST_GROUP_ID = os.environ.get('TEST_GROUP_ID')
+MAIN_GROUP_ID = int(os.environ.get('MAIN_GROUP_ID'))
+TEST_GROUP_ID = int(os.environ.get('TEST_GROUP_ID'))
 TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
-DEV_ID = os.environ.get('DEV_ID')
+DEV_ID = int(os.environ.get('DEV_ID'))

@@ -8,12 +8,15 @@ from typing import List
 # local
 from service.core import models
 from service.utils.decorators import lock_method_for_strangers
+from service.core import constants
 
 # django-specific
 from django.conf import settings
 
 # other/external
 import telebot
+
+
 # --- END: IMPORTS
 
 
@@ -44,7 +47,7 @@ class HopsBot(telebot.TeleBot):
                 pass
         finally:
             # we might get member, but status might be 'left'
-            if member and member.status != 'left':
+            if member and member.status != constants.USER_STATUS_LEFT:
                 return True
             elif uid in whitelist:
                 # whitelist is a whitelist, we don't lock whitelisted users
@@ -85,6 +88,9 @@ def start(message):
             # it is a pure command without additional data
             # we need to do tha basic start procedure
             bot.welcome(message)
+        else:
+            # we have data which needs processing
+            pass
         # TODO: complete the 'start command' body
 
 # --- END: definition of bot instance

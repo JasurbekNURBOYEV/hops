@@ -1,6 +1,8 @@
 from django.db import models
 from datetime import datetime
 
+from django.utils import timezone
+
 
 class BaseManager(models.Manager):
     """
@@ -21,17 +23,17 @@ class BaseLayer(models.Model):
     """
 
     # let's configure managers
-    default_manager = BaseManager()
-    objects = BaseManager()
-    all_objects = models.Manager()
+    default_manager = BaseManager
+    objects = models.Manager
+    all_objects = models.Manager
 
     # all models are going to have following two fields
-    created_time = models.DateTimeField()
-    last_updated_time = models.DateTimeField()
+    created_time = models.DateTimeField(default=timezone.now)
+    last_updated_time = models.DateTimeField(default=timezone.now)
 
     @classmethod
     def create(cls, *args, **kwargs):
-        now = datetime.now()
+        now = timezone.now()
         obj = cls(
             *args,
             **kwargs,
@@ -42,7 +44,7 @@ class BaseLayer(models.Model):
         return obj
 
     def save(self, *args, **kwargs):
-        self.last_updated_time = datetime.now()
+        self.last_updated_time = timezone.now()
         return super(BaseLayer, self).save(*args, **kwargs)
 
     @classmethod
@@ -69,6 +71,9 @@ class User(BaseLayer):
     To store users
     """
     uid = models.IntegerField(unique=True)
+    full_name = models.TextField(null=True)
+    step = models.PositiveSmallIntegerField(default=0)
+    temp_data = models.TextField(null=True)
 
     def __str__(self):
         return f"User: {self.uid}"
@@ -105,3 +110,17 @@ class QuizOption(BaseLayer):
 
     class Meta:
         db_table = 'options'
+
+
+class Certificate(BaseLayer):
+    """
+    Certificate model stores the certification time, scores, class and all other details
+    """
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='certificates')
+    score = models.PositiveSmallIntegerField()
+    percentage = models.DecimalField(max_digits=3, decimal_places=2)
+    class_name = models.CharField(max_length=7)
+    image = models.ImageField(null=True)  # TODO: configure storage options
+
+    class Meta:
+        db_table = 'certificates'

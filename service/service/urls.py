@@ -14,9 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.urls import path
-from service.core import views
+from django.urls import path, include
+from service.core import views as core_views
+from django.contrib import admin
 
 urlpatterns = [
-    path(settings.BOT_TOKEN, views.handle_webhook_requests),
+    path(settings.CONTROL_PAGE_URL, admin.site.urls),
+    path(settings.BOT_TOKEN, core_views.handle_webhook_requests),
 ]

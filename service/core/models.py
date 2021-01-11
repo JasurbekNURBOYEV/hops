@@ -24,7 +24,7 @@ class BaseLayer(models.Model):
 
     # let's configure managers
     default_manager = BaseManager
-    objects = models.Manager
+    objects = BaseManager
     all_objects = models.Manager
 
     # all models are going to have following two fields

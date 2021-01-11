@@ -129,3 +129,21 @@ class Certificate(BaseLayer):
 
     class Meta:
         db_table = 'certificates'
+
+
+class Code(BaseLayer):
+    """
+    To store runnable codes and their details
+    """
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='codes')
+    string = models.CharField(max_length=4095)
+    language_code = models.PositiveSmallIntegerField()
+    requires_input = models.BooleanField(default=False)
+    chat_id = models.IntegerField()
+    message_id = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.user}: {self.language_code}"
+
+    class Meta:
+        db_table = 'codes'

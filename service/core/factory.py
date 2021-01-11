@@ -275,6 +275,8 @@ def callback_handler(call):
                                     # something really bad happened
                                     logging.error(traceback.format_exc())
                                     image = None
+                                user.full_name = user.temp_data
+                                user.save()
                                 certificate = models.Certificate.create(
                                     user=user,
                                     score=current_score,

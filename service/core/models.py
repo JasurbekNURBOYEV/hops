@@ -122,5 +122,10 @@ class Certificate(BaseLayer):
     class_name = models.CharField(max_length=7)
     image = models.ImageField(null=True)  # TODO: configure storage options
 
+    def __str__(self):
+        if self.user.full_name:
+            return ''.join([self.user.full_name[:30], ['', '...'][len(self.user.full_name) > 30]])
+        return f"{self.class_name}: {self.percentage}"
+
     class Meta:
         db_table = 'certificates'

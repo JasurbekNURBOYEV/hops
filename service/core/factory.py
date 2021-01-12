@@ -14,6 +14,7 @@ from service.utils.decorators import lock_method_for_strangers
 from service.core import constants
 from service.core.strings import Strings
 from service.core.certificate import generate_image
+from service.utils.rex import Interpreter
 
 # django-specific
 from django.conf import settings
@@ -22,8 +23,13 @@ from django.conf import settings
 import telebot
 from telebot import types
 
-
 # --- END: IMPORTS
+
+# --- START: GLOBALS
+interpreter = Interpreter()
+
+
+# --- END: GLOBALS
 
 
 class HopsBot(telebot.TeleBot):
@@ -189,31 +195,59 @@ def text_handler(message):
     # what we do here is basically working with steps
     # we do whatever necessary according the current state of the user
     # so, let's start by checking steps
-    if user.step == constants.STEP_TEST_WAITING_TO_START:
-        # if user is waiting for test to begin, that means now s/he sent us a full name
-        # names are (and should be) built by only alpha chars
-        if text.isalpha():
-            # save full name to temp data (so that we can put it on certificate after finishing the test)
-            user.temp_data = text
-            user.save()
-            # generate quiz and start testing
-            quiz, markup, message_string = bot.generate_quiz(message)
-            if not quiz:
-                # hmm, it seems we don't have quizzes yet
-                bot.send_message(uid, bot.strings.test_quizzes_not_found, parse_mode=constants.DEFAULT_PARSE_MODE)
-                # yeah, we pretty much disappointed the user
+    if message.chat.type == 'private':
+        # private chat is processed separately
+        if user.step == constants.STEP_TEST_WAITING_TO_START:
+            # if user is waiting for test to begin, that means now s/he sent us a full name
+            # names are (and should be) built by only alpha chars
+            if text.isalpha():
+                # save full name to temp data (so that we can put it on certificate after finishing the test)
+                user.temp_data = text
+                user.save()
+                # generate quiz and start testing
+                quiz, markup, message_string = bot.generate_quiz(message)
+                if not quiz:
+                    # hmm, it seems we don't have quizzes yet
+                    bot.send_message(uid, bot.strings.test_quizzes_not_found, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    # yeah, we pretty much disappointed the user
+                else:
+                    # everything is ok
+                    # let's start testing
+                    # whoever you are, i'm not gonna forgive if you send the question to main group
+                    bot.send_message(uid, text=message_string, reply_markup=markup,
+                                     parse_mode=constants.DEFAULT_PARSE_MODE)
             else:
-                # everything is ok
-                # let's start testing
-                # whoever you are, i'm not gonna forgive if you send the question to main group
-                bot.send_message(uid, text=message_string, reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
+                # that freaking user lied to us, this is definitely not his/her name
+                # what kinda name would include numbers? well, it would if you were the son of Elon,
+                # well, i'm 100% sure, that boy will never use the bot, so it is safe to do this.
+                bot.send_message(uid, bot.strings.test_full_name_invalid)
         else:
-            # that freaking user lied to us, this is definitely not his/her name
-            # what kinda name would include numbers? well, it would if you were the son of Elon,
-            # well, i'm 100% sure, that boy will never use the bot, so it is safe to do this.
-            bot.send_message(uid, bot.strings.test_full_name_invalid)
+            bot.send_message(uid, bot.strings.step_not_matched)
     else:
-        bot.send_message(uid, bot.strings.step_not_matched)
+        # this is our main group chat (or other group chat)
+        # what can we do in group:
+        # + detect prohibited topics
+        # + run code
+        # + handle management commands
+        # + what else?..
+
+        # first of all, we need to check for prohibited topics
+        # TODO: implement detection for prohibited topics
+
+        # let's start code-running stuff here
+        is_code, code_language = interpreter.detect_code(text)
+        if is_code:
+            # we have a runnable code
+            # run it and show response
+            pass
+        elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
+            # if this is a reply, this might be reply to a code
+            # which means, it can be input data for that code
+            # we'll check that here
+            code = models.Code.get(message_id=message.reply_to_message.message_id)
+            if code and code.requires_input:
+                # this message was a reply to
+                pass  # TODO: implement code-running part here
 
 
 # handler for callback queries

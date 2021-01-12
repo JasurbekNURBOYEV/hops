@@ -5,6 +5,7 @@
 import requests
 import json
 import re
+import ast
 
 
 class Rex:
@@ -60,6 +61,25 @@ class Interpreter(object):
                 return True, line_number + 1, search_result.start()
         # either we failed to detect input function call or there is not any
         return False, 0, 0
+
+    def advanced_input_detection(self, code_string: str) -> bool:
+        """
+        Another version of input detection with built-in ast module.
+        Since we are using Abstract Syntax Tree, there is a pretty high chance that
+        we will find it if there is any input function call inside code
+        :param code_string: code string
+        :return: boolean
+        """
+        # parse the string to AST object
+        parsed_code = ast.parse(code_string)
+        # walk through each node and search for input call
+        for node in ast.walk(parsed_code):
+            if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
+                if node.func.id == 'input':
+                    # we've just found a input() fucntion call
+                    return True
+        # probably there is no input() function call (we might've missed it tho)
+        return False
 
     def detect_code(self, text) -> [bool, int]:
         """

@@ -14,5 +14,4 @@ class QuizAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.User)
-# admin.site.register(QuizAdmin)
 admin.site.register(models.Certificate)

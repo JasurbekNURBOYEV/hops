@@ -33,7 +33,7 @@ class Interpreter(object):
         """
         pattern = "input\s*\("
         quote, double_quote, hashtag = "'", '"', '#'
-        # we are goint to check each line
+        # we are going to check each line
         for line_number, line in enumerate(code_text.splitlines()):
             # line might be a comment, if it is, we need to ignore the line where commenting starts
             quote_open = False

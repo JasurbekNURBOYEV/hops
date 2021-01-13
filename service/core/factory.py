@@ -9,9 +9,6 @@ import logging
 import traceback
 
 # local
-from django.core.files import File
-from django.utils import timezone
-
 from service.core import models
 from service.utils.decorators import lock_method_for_strangers
 from service.core import constants
@@ -20,6 +17,8 @@ from service.core.certificate import create_certificate
 from service.utils.rex import Interpreter
 
 # django-specific
+from django.core.files import File
+from django.utils import timezone
 from django.conf import settings
 
 # other/external
@@ -212,6 +211,7 @@ def text_handler(message):
                 if not quiz:
                     # hmm, it seems we don't have quizzes yet
                     bot.send_message(uid, bot.strings.test_quizzes_not_found, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    bot.set_next_step(user, constants.STEP_INITIAL_POINT)
                     # yeah, we pretty much disappointed the user
                 else:
                     # everything is ok
@@ -219,6 +219,7 @@ def text_handler(message):
                     # whoever you are, i'm not gonna forgive if you send the question to main group
                     bot.send_message(uid, text=message_string, reply_markup=markup,
                                      parse_mode=constants.DEFAULT_PARSE_MODE)
+                    bot.set_next_step(user, constants.STEP_TEST_ONGOING)
             else:
                 # that freaking user lied to us, this is definitely not his/her name
                 # what kinda name would include numbers? well, it would if you were the son of Elon,
@@ -378,6 +379,7 @@ def callback_handler(call):
                                     )
                                 else:
                                     bot.send_photo(uid, image.getvalue())
+                                bot.set_next_step(user, constants.STEP_INITIAL_POINT)
                                 # finally, break the loop
                                 break
                         else:

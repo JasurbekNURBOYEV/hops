@@ -6,6 +6,9 @@ import requests
 import json
 import re
 import ast
+from service.core.strings import Strings
+
+strings = Strings()
 
 
 class Rex:
@@ -115,3 +118,16 @@ class Interpreter(object):
         success = True if not errors else False
         rex = Rex(errors, result, stats, success)
         return rex
+
+    def format_response(self, response) -> str:
+        """
+        Turn Rex instance into decorated string
+        :param response: Rex instance
+        :return: output string
+        """
+        if response.errors:
+            # there was error(s)
+            output = strings.code_result_error_template.format(errors=strings.clean_html(response.errors))
+        else:
+            output = strings.code_result_template.format(result=strings.clean_html(response.result))
+        return output

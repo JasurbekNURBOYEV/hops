@@ -226,31 +226,65 @@ def text_handler(message):
                 bot.send_message(uid, bot.strings.test_full_name_invalid)
         else:
             bot.send_message(uid, bot.strings.step_not_matched)
-    else:
-        # this is our main group chat (or other group chat)
-        # what can we do in group:
-        # + detect prohibited topics
-        # + run code
-        # + handle management commands
-        # + what else?..
+    # this is our main group chat (or other group chat)
+    # what can we do in group:
+    # + detect prohibited topics
+    # + run code
+    # + handle management commands
+    # + what else?..
 
-        # first of all, we need to check for prohibited topics
-        # TODO: implement detection for prohibited topics
+    # first of all, we need to check for prohibited topics
+    # TODO: implement detection for prohibited topics
 
-        # let's start code-running stuff here
-        is_code, code_language = interpreter.detect_code(text)
-        if is_code:
-            # we have a runnable code
-            # run it and show response
-            pass
-        elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
-            # if this is a reply, this might be reply to a code
-            # which means, it can be input data for that code
-            # we'll check that here
-            code = models.Code.get(message_id=message.reply_to_message.message_id)
-            if code and code.requires_input:
-                # this message was a reply to
-                pass  # TODO: implement code-running part here
+    # let's start code-running stuff here
+    is_code, code_language = interpreter.detect_code(text)
+    if is_code:
+        # we have a runnable code
+        # run it and show response
+        requires_input = interpreter.advanced_input_detection(text)
+        if requires_input:
+            # if code requires input, we do not run it
+            # when user replied to it with input data, then we run and show results
+            # but if bot just stays silent, it might seem weird
+            # so we notify user in private about this
+            bot.send_message(uid, bot.strings.code_please_provide_input)
+        else:
+            # since code doesn't require input, we run it immediately
+            response = interpreter.run(code_language, text)
+            formatted_output = interpreter.format_response(response)
+            bot.reply_to(
+                message,
+                formatted_output,
+                parse_mode=constants.DEFAULT_PARSE_MODE
+            )
+            if response.errors and message.chat.type != 'private':
+                # let's send a tip to user
+                bot.send_message(
+                    uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
+                )
+        models.Code.create(
+            chat_id=message.chat.id,
+            user=user,
+            language_code=code_language,
+            string=text,
+            requires_input=requires_input,
+            message_id=message.message_id
+        )
+    elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
+        # if this is a reply, this might be reply to a code
+        # which means, it can be input data for that code
+        # we'll check that here
+        input_data = text.replace(constants.DEFAULT_INPUT_HEADER, 1)
+        code = models.Code.get(message_id=message.reply_to_message.message_id)
+        if code and code.requires_input:
+            # this message was a reply to
+            response = interpreter.run(code.language_code, code.string, input_data=input_data)
+            formatted_output = interpreter.format_response(response)
+            bot.reply_to(
+                message,
+                formatted_output,
+                parse_mode=constants.DEFAULT_PARSE_MODE
+            )
 
 
 # handler for callback queries

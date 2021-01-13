@@ -36,7 +36,30 @@ class Strings(object):
                                                "qo'yaman."
     test_class_not_found = "Test natijalarini hisoblashda nimadir xato ketdi. Katta ehtimol bilan, olgan ballingiz" \
                            " birorta darajaga mos kelmadi"
+
+    # code running
+    code_please_provide_input = "Yozgan kodingiz input talab qiladigan kodga o'xshadi. Uni ishlatishim uchun" \
+                                "shu kodga reply qilib inputni yozing. Har bir qator bitta input uchun matn " \
+                                "hisoblanadi. Kodingizda bir nechta input bo'lsa, bir necha qator matn bilan " \
+                                "reply qilishingiz mumkin."
+    code_result_template = "<b>Natija</b>\n<code>{result}</code>"
+    code_result_error_template = "<b>Xatolik</b>\n<code>{errors}</code>"
+    code_result_errors_detected_tip = "Guruhda kod yozganingizda xatolik chiqmasligi uchun, avval kodni mana shu " \
+                                      "yerda <b>o'zimga jo'nating</b>, xatolari bo'lsa ko'rib, tuzatvolib, keyin " \
+                                      "guruhga jo'natasiz. \n<b>Bu orqali siz guruhdagi kunlik limitlaringizni saqlab" \
+                                      " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
+
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"
 
+    def clean_html(self, text: str) -> str:
+        """
+        To replace html chars with their equivalences
+        :param text: input data
+        :return: clean text
+        """
+        gt = (">", "&gt;")
+        lt = ("<", "&lt;")
+        amp = ("&", "&amp;")
+        return text.replace(amp[0], amp[1]).replace(gt[0], gt[1]).replace(lt[0], lt[1])

@@ -3,6 +3,8 @@ from datetime import datetime
 
 from django.utils import timezone
 
+from service.core import constants
+
 
 class BaseManager(models.Manager):
     """
@@ -118,9 +120,27 @@ class Certificate(BaseLayer):
     """
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='certificates')
     score = models.PositiveSmallIntegerField()
-    percentage = models.DecimalField(max_digits=3, decimal_places=2)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2)
     class_name = models.CharField(max_length=7)
-    image = models.ImageField(null=True)  # TODO: configure storage options
+    image = models.ImageField(upload_to="images/certificates", null=True)
+
+    @classmethod
+    def create(cls, user, score, percentage, class_name, image=None):
+        # we set limit to store certificates
+        # one user can get unlimited certificates, but we store only the last 3 of them
+        # because we don't want to fill our storage with redundant garbage
+        instances = cls.objects.filter(user=user)
+        if instances.count() >= constants.DEFAULT_CERT_LIMIT:
+            instances.order_by('-created_time').last().delete()
+        return super().create(
+            user=user, score=score, percentage=percentage, class_name=class_name, image=image
+        )
+
+    def delete(self, using=None, keep_parents=False):
+        # when we delte certificate, its image should also be deleted
+        if self.image.storage.exists(self.image.name):
+            self.image.storage.delete(self.image.name)
+        super(Certificate, self).delete(using=using, keep_parents=keep_parents)
 
     def __str__(self):
         if self.user.full_name:

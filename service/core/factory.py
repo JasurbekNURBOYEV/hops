@@ -9,11 +9,14 @@ import logging
 import traceback
 
 # local
+from django.core.files import File
+from django.utils import timezone
+
 from service.core import models
 from service.utils.decorators import lock_method_for_strangers
 from service.core import constants
 from service.core.strings import Strings
-from service.core.certificate import generate_image
+from service.core.certificate import create_certificate
 from service.utils.rex import Interpreter
 
 # django-specific
@@ -200,7 +203,7 @@ def text_handler(message):
         if user.step == constants.STEP_TEST_WAITING_TO_START:
             # if user is waiting for test to begin, that means now s/he sent us a full name
             # names are (and should be) built by only alpha chars
-            if text.isalpha():
+            if len(text.split()) == 2:
                 # save full name to temp data (so that we can put it on certificate after finishing the test)
                 user.temp_data = text
                 user.save()
@@ -303,12 +306,18 @@ def callback_handler(call):
                             if score_percentage >= percentage:
                                 # we've done everything so far
                                 # now only thing left is making a new certificate
+                                score_percentage = int(score_percentage * 100)
                                 try:
-                                    image = generate_image(name, user.temp_data, percentage)
+                                    image, image_name = create_certificate(
+                                        *user.temp_data.split(),
+                                        name,
+                                        score_percentage,
+                                        timezone.now().strftime("%Y-%m-%d")
+                                    )
                                 except Exception as e:
                                     # something really bad happened
                                     logging.error(traceback.format_exc())
-                                    image = None
+                                    image = image_name = None
                                 user.full_name = user.temp_data
                                 user.save()
                                 certificate = models.Certificate.create(
@@ -316,7 +325,7 @@ def callback_handler(call):
                                     score=current_score,
                                     percentage=score_percentage,
                                     class_name=name,
-                                    image=image if image else None  # TODO: modify to save the image properly
+                                    image=File(image, name=image_name) if image else None
                                 )
                                 bot.send_message(
                                     uid,
@@ -334,8 +343,7 @@ def callback_handler(call):
                                         parse_mode=constants.DEFAULT_PARSE_MODE
                                     )
                                 else:
-                                    # TODO: send the image
-                                    pass
+                                    bot.send_photo(uid, image.getvalue())
                                 # finally, break the loop
                                 break
                         else:

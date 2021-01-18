@@ -76,6 +76,7 @@ class User(BaseLayer):
     full_name = models.TextField(null=True)
     step = models.PositiveSmallIntegerField(default=0)
     temp_data = models.TextField(null=True)
+    magic_word = models.CharField(max_length=63)
 
     def __str__(self):
         return f"User: {self.uid}"

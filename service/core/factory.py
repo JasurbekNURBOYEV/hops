@@ -225,8 +225,6 @@ def text_handler(message):
                 # what kinda name would include numbers? well, it would if you were the son of Elon,
                 # well, i'm 100% sure, that boy will never use the bot, so it is safe to do this.
                 bot.send_message(uid, bot.strings.test_full_name_invalid)
-        else:
-            bot.send_message(uid, bot.strings.step_not_matched)
     # this is our main group chat (or other group chat)
     # what can we do in group:
     # + detect prohibited topics

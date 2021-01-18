@@ -5,14 +5,6 @@ Necessary tools
 import json
 from datetime import *
 import re
-from service.files import File as f
-from service.globals import bot, dev, should_log
-
-
-def log(*data):
-    if should_log:
-        bot.send_message(dev, ', '.join([str(x) for x in data]), parse_mode='html')
-
 
 def resizer(name):
     sizes = {
@@ -220,7 +212,6 @@ def get_info(uid):
 
 
 def translate(text):
-    text = text.lower()
     letters = {
         'а': 'a',
         'б': 'b',
@@ -259,14 +250,7 @@ def translate(text):
     }
     for i in letters.keys():
         text = text.replace(i, letters[i])
-    return text.replace(
-        '🅱️', 'b').replace('🅾️', 'o') \
-        .replace('⭕️', 'o') \
-        .replace('✝️'.replace(u'\ufe0f', u''), 't') \
-        .replace('🅱️'.replace(u'\ufe0f', u''), 'b') \
-        .replace('🅾️'.replace(u'\ufe0f', u''), 'o') \
-        .replace('✝️', '') \
-        .replace('⭕️'.replace(u'\ufe0f', u''), '')
+    return text
 
 
 def scaner(text):

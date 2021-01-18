@@ -49,6 +49,10 @@ class Strings(object):
                                       "guruhga jo'natasiz. \n<b>Bu orqali siz guruhdagi kunlik limitlaringizni saqlab" \
                                       " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
 
+    # prohibited topics
+    prohibited_topic_detected = "Matnda quyidagi taqiqlangan mavzular aniqlandi:\n{topics}"
+    prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha aniqlangan so'zlar: {words}\n{hint}"
+
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"

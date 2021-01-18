@@ -3,10 +3,11 @@ This is a bot factory module which is roughly used to create full bot instance
 """
 # --- START: IMPORTS
 # built-in
-from typing import List
+from typing import List, Tuple
 from random import shuffle
 import logging
 import traceback
+import re
 
 # local
 from service.core import models
@@ -70,7 +71,10 @@ class HopsBot(telebot.TeleBot):
             return False
 
     def notify_about_membership(self, message) -> None:
-        self.send_message(message.from_user.id, "You have to be a member of main group")
+        try:
+            self.send_message(message.from_user.id, "You have to be a member of main group")
+        except:
+            pass
 
     def welcome(self, message) -> None:
         """
@@ -144,6 +148,107 @@ class HopsBot(telebot.TeleBot):
         )
         # all done
         return quiz, markup, text
+
+    def clean_text(self, text: str, spoilers: List[Tuple[str]]) -> str:
+        """
+        To clean the text from redundant chars...
+        :param text: incoming message text
+        :param spoilers: spoiler words and their alternatives
+        :return: clean text
+        """
+        # reveal spoilers in text
+        for spoiler, alternative in spoilers:
+            text = text.replace(spoiler, alternative)
+        # get rid of non-numeric & non-alpha chars
+        for char in text:
+            if not char.isalnum() and char != " ":
+                text = text.replace(char, "")
+        # translate kirill text
+        letters = {
+            'а': 'a',
+            'б': 'b',
+            'д': 'd',
+            'э': 'e',
+            'ф': 'f',
+            'г': 'g',
+            'ҳ': 'h',
+            'и': 'i',
+            'ж': 'j',
+            'к': 'k',
+            'л': 'l',
+            'м': 'm',
+            'н': 'n',
+            'о': 'o',
+            'п': 'p',
+            'қ': 'q',
+            'р': 'r',
+            'с': 's',
+            'т': 't',
+            'у': 'u',
+            'в': 'b',
+            'х': 'x',
+            'й': 'y',
+            'з': 'z',
+            'ў': 'o\'',
+            'ғ': 'g\'',
+            'ш': 'sh',
+            'ч': 'ch',
+            'е': 'ye',
+            'ё': 'yo',
+            'ю': 'yu',
+            'я': 'ya',
+            'ъ': '\'',
+            'ы': 'y'
+        }
+        for letter, translation in letters.items():
+            text = text.replace(letter, translation)
+        return text
+
+    def detect_prohibited_topic(self, text: str) -> List[Tuple[dict, List[str]]]:
+        """
+        This method is used to detect/collect prohibited topics/keywords
+        :param text: message text
+        :return: collection of detected keywords
+        """
+        text = text.lower()
+        topics = settings.PROHIBITED_TOPICS
+        detected_topics = []
+        for topic in topics:
+            detected_targets = []
+            topic_name = topic['name']
+            whitelist = topic.get('whitelist', [])
+            targets = topic.get('targets', [topic_name])
+            spoilers = topic.get('spoilers', [])
+            clean_text = self.clean_text(text, spoilers=spoilers)
+            # let's analyze the text
+            # try to connect all letters of target words together (if ther are separated by spaces)
+            # and collect all those suspicious words
+            suspicious_words = set()
+            for target_word in targets:
+                s = "{1,}\s*"
+                lets = "[a-z0-9]*"
+                pattern = f"{lets}{target_word[0]}{s}{s.join([i for i in target_word[1:-1]])}{s}{target_word[-1]}{lets}"
+                for i in re.findall(pattern, clean_text):
+                    final_word = ""
+                    # remove repeated chars in one place
+                    for j in range(1, len(i)):
+                        if i[j] != i[j-1]:
+                            final_word += i[j-1]
+                    final_word += i[-1]
+                    detected_targets.append(final_word)
+                    # let see if the word matches with
+            # check every word against target word
+            for word in suspicious_words:
+                for target in targets:
+                    if target in word:
+                        for white in whitelist:
+                            if word in white:
+                                break
+                        else:
+                            detected_targets.append(word)
+            if detected_targets:
+                detected_topics.append((topic, detected_targets))
+        return detected_topics
 
 
 # --- START: definition of bot instance
@@ -233,7 +338,20 @@ def text_handler(message):
     # + what else?..
 
     # first of all, we need to check for prohibited topics
-    # TODO: implement detection for prohibited topics
+    detected_topics = bot.detect_prohibited_topic(text)
+    if detected_topics:
+        # for testing purpose only: show detected topic and detected words
+        warning_message = bot.strings.prohibited_topic_detected.format(
+            topics="\n".join(
+                [
+                    bot.strings.prohibited_topic_template.format(
+                        topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
+                    )
+                    for topic, words in detected_topics
+                ]
+            )
+        )
+        bot.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
 
     # let's start code-running stuff here
     is_code, code_language = interpreter.detect_code(text)

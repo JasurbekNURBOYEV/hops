@@ -25,6 +25,7 @@ from django.conf import settings
 # other/external
 import telebot
 from telebot import types
+import pytesseract
 
 # --- END: IMPORTS
 
@@ -232,17 +233,17 @@ class HopsBot(telebot.TeleBot):
                     final_word = ""
                     # remove repeated chars in one place
                     for j in range(1, len(i)):
-                        if i[j] != i[j-1]:
-                            final_word += i[j-1]
+                        if i[j] != i[j - 1]:
+                            final_word += i[j - 1]
                     final_word += i[-1]
-                    detected_targets.append(final_word)
+                    suspicious_words.add(final_word)
                     # let see if the word matches with
             # check every word against target word
             for word in suspicious_words:
                 for target in targets:
                     if target in word:
                         for white in whitelist:
-                            if word in white:
+                            if white in word:
                                 break
                         else:
                             detected_targets.append(word)
@@ -402,6 +403,35 @@ def text_handler(message):
                 formatted_output,
                 parse_mode=constants.DEFAULT_PARSE_MODE
             )
+
+
+# photo handler
+@bot.message_handler(content_types=['photo'])
+@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
+def image_handler(message):
+    # ATTENTION: testing phase is going on here
+    # we'll be testing tesseract-ocr below, this part of the code will not be present on production
+    photo = message.photo[-1]
+    dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
+    with open(f'{photo.file_unique_id}.jpg', 'wb') as f:
+        f.write(dl_file)
+        f.flush()
+    text = pytesseract.image_to_string(f'{photo.file_unique_id}.jpg', timeout=3)
+    # first of all, we need to check for prohibited topics
+    detected_topics = bot.detect_prohibited_topic(text)
+    if detected_topics:
+        # for testing purpose only: show detected topic and detected words
+        warning_message = bot.strings.prohibited_topic_detected.format(
+            topics="\n".join(
+                [
+                    bot.strings.prohibited_topic_template.format(
+                        topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
+                    )
+                    for topic, words in detected_topics
+                ]
+            )
+        )
+        bot.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
 
 
 # handler for callback queries

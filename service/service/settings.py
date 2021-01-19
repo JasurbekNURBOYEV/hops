@@ -25,18 +25,18 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 PRODUCTION_MODE = os.environ.get('PROD', False)
 DEBUG = not PRODUCTION_MODE
 
-ALLOWED_HOSTS = os.environ.get('HOSTS').split('\,')
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'service.core',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'service.core',
 ]
 
 MIDDLEWARE = [

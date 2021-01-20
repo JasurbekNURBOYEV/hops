@@ -3,13 +3,19 @@ This is a bot factory module which is roughly used to create full bot instance
 """
 # --- START: IMPORTS
 # built-in
+import os
+from datetime import datetime, timedelta
 from typing import List, Tuple
 from random import shuffle
 import logging
 import traceback
 import re
+from io import BytesIO
 
 # local
+import pytz
+from django.db.models import Sum
+
 from service.core import models
 from service.utils.decorators import lock_method_for_strangers
 from service.core import constants
@@ -26,6 +32,7 @@ from django.conf import settings
 import telebot
 from telebot import types
 import pytesseract
+from PIL import Image
 
 # --- END: IMPORTS
 
@@ -251,6 +258,63 @@ class HopsBot(telebot.TeleBot):
                 detected_topics.append((topic, detected_targets))
         return detected_topics
 
+    def restrict_with_warning(self, message, detected_topics, user):
+        """
+        To restrict users when prohibited topic is detected
+        :param user: User object
+        :param message: message
+        :param detected_topics: list of detected topics
+        :return: None
+        """
+        # print('warning message:', warning_message)
+        restriction_logs = models.Restriction.filter(user=user)
+        overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
+        overall_seconds = overall_seconds if overall_seconds is not None else 0
+        recent_log = restriction_logs.last()
+        if recent_log:
+            last_restriction_seconds = recent_log.seconds
+        else:
+            last_restriction_seconds = 0
+        next_restriction_seconds = last_restriction_seconds + constants.DEFUALT_RESTRICTION_SECONDS
+        until_date = datetime.now().replace(tzinfo=timezone.get_current_timezone()) + timedelta(seconds=next_restriction_seconds)
+        try:
+            warning_message = self.strings.prohibited_topic_detected.format(
+                topics="\n".join(
+                    [
+                        self.strings.prohibited_topic_template.format(
+                            topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
+                        )
+                        for topic, words in detected_topics
+                    ]
+                ),
+                user_name=message.from_user.first_name,
+                user_id=message.from_user.id,
+                date=(until_date.replace(tzinfo=pytz.UTC)).strftime("%Y-%m-%d %H:%M")
+            )
+            if overall_seconds >= constants.DEFAULT_BAN_LIMIT_SECONDS:
+                # we need to ban the user
+                self.kick_chat_member(message.chat.id, message.from_user.id)
+            # we try to restrict the user
+            self.restrict_chat_member(
+                message.chat.id,
+                message.from_user.id,
+                can_send_messages=False,
+                can_send_media_messages=False,
+                can_send_other_messages=False,
+                can_add_web_page_previews=False,
+                can_invite_users=False,
+                until_date=int(until_date.timestamp())
+            )
+            self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+            # create restriction log
+            models.Restriction.create(user=user, seconds=next_restriction_seconds)
+            # done
+        except telebot.apihelper.ApiTelegramException as e:
+            # we couldn't restrict, bot might not be an admin or some kind of fatal error occured
+            logging.error(e)
+        except Exception as fe:
+            logging.error(fe)
+
 
 # --- START: definition of bot instance
 # initialize a bot instance
@@ -341,18 +405,8 @@ def text_handler(message):
     # first of all, we need to check for prohibited topics
     detected_topics = bot.detect_prohibited_topic(text)
     if detected_topics:
-        # for testing purpose only: show detected topic and detected words
-        warning_message = bot.strings.prohibited_topic_detected.format(
-            topics="\n".join(
-                [
-                    bot.strings.prohibited_topic_template.format(
-                        topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
-                    )
-                    for topic, words in detected_topics
-                ]
-            )
-        )
-        bot.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+        # restrict & warn
+        bot.restrict_with_warning(message, detected_topics, user)
 
     # let's start code-running stuff here
     is_code, code_language = interpreter.detect_code(text)
@@ -409,29 +463,21 @@ def text_handler(message):
 @bot.message_handler(content_types=['photo'])
 @lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
 def image_handler(message):
-    # ATTENTION: testing phase is going on here
-    # we'll be testing tesseract-ocr below, this part of the code will not be present on production
+    uid = message.from_user.id
+    user, new = models.User.objects.get_or_create(uid=uid)
     photo = message.photo[-1]
+    # get the caption text
+    text = message.caption if message.caption else ""
+    # download the image
     dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
-    with open(f'{photo.file_unique_id}.jpg', 'wb') as f:
-        f.write(dl_file)
-        f.flush()
-    text = pytesseract.image_to_string(f'{photo.file_unique_id}.jpg', timeout=3)
-    # first of all, we need to check for prohibited topics
+    img = Image.open(BytesIO(dl_file))
+    # combine caption text and extratced text from image
+    text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
+    # check for prohibited topics
     detected_topics = bot.detect_prohibited_topic(text)
     if detected_topics:
-        # for testing purpose only: show detected topic and detected words
-        warning_message = bot.strings.prohibited_topic_detected.format(
-            topics="\n".join(
-                [
-                    bot.strings.prohibited_topic_template.format(
-                        topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
-                    )
-                    for topic, words in detected_topics
-                ]
-            )
-        )
-        bot.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+        # restrict & warn
+        bot.restrict_with_warning(message, detected_topics, user)
 
 
 # handler for callback queries

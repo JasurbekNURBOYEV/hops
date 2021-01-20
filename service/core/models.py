@@ -168,3 +168,14 @@ class Code(BaseLayer):
 
     class Meta:
         db_table = 'codes'
+
+
+class Restriction(BaseLayer):
+    """
+    To log restriction history
+    """
+    user = models.ForeignKey(User, models.CASCADE, related_name='restrictions')
+    seconds = models.IntegerField()
+
+    class Meta:
+        db_table = 'restrictions'

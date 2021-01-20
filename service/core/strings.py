@@ -50,8 +50,10 @@ class Strings(object):
                                       " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
 
     # prohibited topics
-    prohibited_topic_detected = "Matnda quyidagi taqiqlangan mavzular aniqlandi:\n{topics}"
-    prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha aniqlangan so'zlar: {words}\n{hint}"
+    prohibited_topic_detected = "{user_name} [<code>{user_id}</code>] taqiqlangan mavzudagi gaplari uchun {date} " \
+                                "gacha guruhda yozishdan cheklab qo'yildi. \nQuyidagi taqiqlangan mavzular " \
+                                "aniqlandi:\n{topics}"
+    prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha: {words}\n{hint}"
 
     # generally used strings
     cancelled = "Jarayon bekor qilindi"

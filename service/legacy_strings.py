@@ -1,4 +1,4 @@
-# STRINGS.py - it is just strings.py
+# STRINGS.py - it is just legacy_strings.py
 # this file is the most ugly one, it is highly recommended to close this file right now
 # thanks
 

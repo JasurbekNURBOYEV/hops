@@ -16,7 +16,7 @@ from service.utils.rex import run
 from service.utils.tools import *
 from service.utils import telegraph, book, tools
 from service.files import File as f
-from service.strings import get_string
+from service.legacy_strings import get_string
 from service.globals import *
 
 

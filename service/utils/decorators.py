@@ -1,5 +1,13 @@
+# --- START: IMPORTS
+
+# built-in
 from typing import Callable, List
 import inspect
+
+# local
+# django-specific
+# other/external
+# --- END: IMPORTS
 
 
 def lock_method_for_strangers(

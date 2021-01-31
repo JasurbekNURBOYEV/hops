@@ -8,6 +8,21 @@ class Strings(object):
     The class mostly consists of static fields
     """
     # strings related to testing process
+
+    # new member
+    new_member = "Salom {name}! Python guruhiga xush kelibsiz!\n\nSiz hozir guruhda faqat o'qiy olasiz. Yozish " \
+                 "imkoniyatiga ega bo'lish uchun quyidagi tugmani bosing va qoidalarga roziligingizni bildiring"
+    new_member_button_text = "Bu yerga bosing"
+    new_member_old_comrade_back = 'Eski qadrdonimiz <a href="tg://user?id={uid}">{name}</a> safimizga qaytdi'
+    new_member_already_restricted = '⚠️ <a href="tg://user?id={uid}">{name}</a> avvaldan ushbu guruhda mavjud bo\'lgan ' \
+                                    'va guruh adminlari tomonidan cheklov olgan. Cheklovlarni chetlab o\'tish maqsadida' \
+                                    'guruhga qayta kirishga urindi. Foydalanuvchi muddat tugashini kutishi kerak.' \
+                                    '\n\n⏰ Cheklov {time} da olib tashlanadi.'
+    new_member_not_agreed_yet = '⚠️ <a href="tg://user?id={uid}">{name}</a> qoidalarga shu paytgacha rozilik ' \
+                                'bildirmagan ko\'rinadi. Iltimos, quyidagi tugmani bosing va so\'ralgan topshiriqni ' \
+                                'bajaring. Undan keyin sizga shu guruhda yozish imkoniyatini beramiz;)'
+
+    # test
     start_test = "Kayfiyatlar qalay ;)\nXo'sh, hozir siz bor yo'g'i 10 dona test ishlaysiz, lekin shuning " \
                  "o'zi yetarli bo'ladi. Demak, testni boshlashdan avval tanishib olsak. Ism va familiyangizni" \
                  " Ism Familiya shaklida yozib jo'nating. Masalan:\n  Eshmatjon Toshmatov\n\nIltimos, ma'lumotni" \
@@ -54,10 +69,16 @@ class Strings(object):
                                 "gacha guruhda yozishdan cheklab qo'yildi. \nQuyidagi taqiqlangan mavzular " \
                                 "aniqlandi:\n{topics}"
     prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha: {words}\n{hint}"
+    restricted_until_time = '%Y-yil, {day}-{month}, soat %H:%M'
 
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"
+    keys = ["olma", "yo'lbars", "ruchka", "wifi", "kitob", "toshbaqa", "kaktus", "hamkorlik", "hayot", "kema",
+            "televizor", "xanjar", "oyna", "bulut", "stul", "bayroq", "diplom", "tanga", "sirtlon", "tulpor", "tarmoq",
+            "python", "monitor", "grafika", "choynak", "apelsin", "diplomat", "kelajak", "daraxt", "bolta", "tuxum",
+            "xazina", "onajonim", "xalq", "bolalik", "jannat", "farishta", "tabassum"
+            ]
 
     def clean_html(self, text: str) -> str:
         """
@@ -69,3 +90,26 @@ class Strings(object):
         lt = ("<", "&lt;")
         amp = ("&", "&amp;")
         return text.replace(amp[0], amp[1]).replace(gt[0], gt[1]).replace(lt[0], lt[1])
+
+    def resize(self, text, max_size: int) -> str:
+        # resize the string and return it
+        if len(text) > max_size:
+            return f"{text[:max_size // 2]}...{text[-max_size // 2:]}"
+        return text
+
+    def month_to_str(self, month):
+        months = {
+            1: 'yanvar',
+            2: 'fevral',
+            3: 'mart',
+            4: 'aprel',
+            5: 'may',
+            6: 'iyun',
+            7: 'iyul',
+            8: 'avgust',
+            9: 'sentabr',
+            10: 'oktabr',
+            11: 'noyabr',
+            12: 'dekabr'
+        }
+        return months.get(month, '¯\_(ツ)_/¯')

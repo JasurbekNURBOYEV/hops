@@ -1,9 +1,15 @@
-from django.db import models
-from datetime import datetime
+# --- START: IMPORTS
 
+# built-in
+# local
+from service.core import constants
+
+# django-specific
+from django.db import models
 from django.utils import timezone
 
-from service.core import constants
+# other/external
+# --- END: IMPORTS
 
 
 class BaseManager(models.Manager):
@@ -77,6 +83,8 @@ class User(BaseLayer):
     step = models.PositiveSmallIntegerField(default=0)
     temp_data = models.TextField(null=True)
     magic_word = models.CharField(max_length=63)
+    welcome_message_id = models.IntegerField(null=True)
+    agreement_time = models.DateTimeField(null=True)
 
     def __str__(self):
         return f"User: {self.uid}"

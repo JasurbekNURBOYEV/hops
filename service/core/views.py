@@ -3,7 +3,7 @@ Main views file.
 We'll be implementing the base control units here.
 
 """
-# IMPORTS
+# --- START: IMPORTS
 # built-in
 # local
 from service.core.factory import bot
@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 # other/external
 import telebot
+# --- END: IMPORTS
 
 
 @csrf_exempt

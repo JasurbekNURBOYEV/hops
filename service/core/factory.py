@@ -3,7 +3,7 @@ This is a bot factory module which is roughly used to create full bot instance
 """
 # --- START: IMPORTS
 # built-in
-import os
+import random
 from datetime import datetime, timedelta
 from typing import List, Tuple
 from random import shuffle
@@ -13,9 +13,6 @@ import re
 from io import BytesIO
 
 # local
-import pytz
-from django.db.models import Sum
-
 from service.core import models
 from service.utils.decorators import lock_method_for_strangers
 from service.core import constants
@@ -27,19 +24,19 @@ from service.utils.rex import Interpreter
 from django.core.files import File
 from django.utils import timezone
 from django.conf import settings
+from django.db.models import Sum
 
 # other/external
 import telebot
 from telebot import types
 import pytesseract
 from PIL import Image
-
+import pytz
 # --- END: IMPORTS
+
 
 # --- START: GLOBALS
 interpreter = Interpreter()
-
-
 # --- END: GLOBALS
 
 
@@ -49,6 +46,14 @@ class HopsBot(telebot.TeleBot):
     We'll be defining a bunch of custom behaviours here.
     """
     strings = Strings()
+    _id = None
+
+    @property
+    def id(self):
+        # we cache the bot id, since we may need it alot
+        if self._id is None:
+            self._id = self.get_me().id
+        return self._id
 
     def is_member(self, uid: int, whitelist: List[int]) -> bool:
         """
@@ -276,7 +281,8 @@ class HopsBot(telebot.TeleBot):
         else:
             last_restriction_seconds = 0
         next_restriction_seconds = last_restriction_seconds + constants.DEFUALT_RESTRICTION_SECONDS
-        until_date = datetime.now().replace(tzinfo=timezone.get_current_timezone()) + timedelta(seconds=next_restriction_seconds)
+        until_date = datetime.now().replace(tzinfo=timezone.get_current_timezone()) + timedelta(
+            seconds=next_restriction_seconds)
         try:
             warning_message = self.strings.prohibited_topic_detected.format(
                 topics="\n".join(
@@ -434,6 +440,7 @@ def text_handler(message):
                 bot.send_message(
                     uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
                 )
+        # save the code
         models.Code.create(
             chat_id=message.chat.id,
             user=user,
@@ -449,7 +456,7 @@ def text_handler(message):
         input_data = text.replace(constants.DEFAULT_INPUT_HEADER, 1)
         code = models.Code.get(message_id=message.reply_to_message.message_id)
         if code and code.requires_input:
-            # this message was a reply to
+            # this message was a reply to code
             response = interpreter.run(code.language_code, code.string, input_data=input_data)
             formatted_output = interpreter.format_response(response)
             bot.reply_to(
@@ -478,6 +485,125 @@ def image_handler(message):
     if detected_topics:
         # restrict & warn
         bot.restrict_with_warning(message, detected_topics, user)
+
+
+# new chat members handler
+@bot.message_handler(content_types=['new_chat_member', 'new_chat_members'])
+@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
+def new_chat_member_handler(message):
+    # we handle new users joining our group here
+    # we may have different scenarios:
+    # - just a new user joined
+    # - old user joined, but s/he didn't agree on our rules last time
+    # - old user joined, s/he already agreed on rules
+    # - old user joined, s/he was restricted, thus should wait until restriction expires
+
+    # having all scenarios taken into consideration, we start the implementation one by one
+    # let's check our guests
+    for guest in message.new_chat_members:
+        # if our bot is added to a group, we check if it is allowed group
+        if guest.id == bot.id:
+            if message.chat.id not in constants.ALLOWED_CHATS:
+                # this group is not allowed, so we are gonna leave
+                bot.leave_chat(message.chat.id)
+        elif not guest.is_bot:
+            # we have new member in our allowed chat
+            # our guest may have a very unpleasent nickname
+            # we are going to normalize it
+            guest_name = guest.first_name
+            if guest.last_name:
+                guest_name = " ".join((guest_name, guest.last_name))
+            guest_name = bot.strings.resize(guest_name, 20)
+            guest_name = bot.strings.clean_html(guest_name)
+            # we choose a key for each guest, they will have to find the key in order get access to write
+            key = random.choice(bot.strings.keys)
+            # prepare callback buttons for our guest
+            callback_data = constants.CALLBACK_DATA_NEW_MEMBER_TEMPLATE.format(
+                uid=guest.id,
+                chat_id=message.chat.it
+            )
+            markup = types.InlineKeyboardMarkup()
+            markup.add(
+                types.InlineKeyboardButton(
+                    text=bot.strings.new_member_button_text,
+                    callback_data=callback_data
+                )
+            )
+
+            user = models.User.get(uid=guest.id)
+            # scenario 1: user is totally new
+            if not user:
+                # since the user is new, let's start by adding to database
+                user = models.User.create(uid=guest.id)
+                # try to restrict
+                try:
+                    bot.restrict_chat_member(message.chat.id, guest.id, can_send_messages=False)
+                    # restricted, now send a 'welcome' message
+                    welcome_message = bot.send_message(
+                        message.chat.id,
+                        bot.strings.new_member,
+                        reply_markup=markup,
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    # we save message id, so that we can delete or edit it when user agrees to rules
+                    user.magic_word = key
+                    user.welcome_message_id = welcome_message.message_id
+                    user.save()
+                except telebot.apihelper.ApiTelegramException:
+                    # we probably could not restrict the user due to lack of admin rights
+                    logging.error(traceback.format_exc())
+                except Exception:
+                    # fatal error occured
+                    logging.error(traceback.format_exc())
+
+            # scenario 2: user is old, and already agreed on rules
+            elif user.agreement_time is not None:
+                guest_info = bot.get_chat_member(message.chat.id, guest.id)
+                # this scenario includes other two different scenarios
+                # 1 - user is currently restricted (was recentl punished for some reason and now is trying to re-join)
+                # 2 - user is not restricted
+                if not guest_info.can_send_messages:
+                    until_date = datetime.fromtimestamp(guest_info.until_date).replace(
+                        tzinfo=timezone.get_current_timezone())
+                    # convert the time into human-redable string
+                    representable_until_date = until_date.strftime(
+                        bot.strings.restricted_until_time.format(
+                            day=until_date.day,
+                            month=bot.strings.month_to_str(until_date.month)
+                        )
+                    )
+                    # we warn the user
+                    bot.send_message(
+                        message.chat.id,
+                        bot.strings.new_member_already_restricted.format(
+                            uid=guest.id,
+                            name=guest_name,
+                            time=representable_until_date
+                        ),
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                else:
+                    # our old comrade has finally come back, let's give a hug
+                    bot.send_message(
+                        message.chat.id, bot.strings.new_member_old_comrade_back.format(
+                            uid=guest.id, name=guest_name
+                        ),
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+
+            # scenario 3: user id old, but didn't agree on rules
+            else:
+                # user hasn't agreed to rules yet
+                # let's remind
+                bot.send_message(
+                    message.chat.id,
+                    bot.strings.new_member_not_agreed_yet.format(
+                        uid=guest.id,
+                        name=guest_name
+                    ),
+                    reply_markup=markup,
+                    parse_mode=constants.DEFAULT_PARSE_MODE
+                )
 
 
 # handler for callback queries
@@ -541,7 +667,7 @@ def callback_handler(call):
                                         score_percentage,
                                         timezone.now().strftime("%Y-%m-%d")
                                     )
-                                except Exception as e:
+                                except Exception:
                                     # something really bad happened
                                     logging.error(traceback.format_exc())
                                     image = image_name = None

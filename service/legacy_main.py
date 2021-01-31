@@ -34,7 +34,7 @@ def get_restrict_time(cid, uid):
             return 'forever'
         month = (datetime.fromtimestamp(until_date) + timedelta(hours=5)).strftime('%m')
         day = int((datetime.fromtimestamp(until_date) + timedelta(hours=5)).strftime('%d'))
-        return (datetime.fromtimestamp(until_date) + timedelta(hours=5)).strftime('%Y-yilning {}-{} kuni soat %H:%M'.format(day, return_month(month)))
+        return (datetime.fromtimestamp(until_date) + timedelta(hours=5)).strftime('%Y-yilning {}-{} kuni soat %H:%M'.format(day, return_mnth(month)))
     except:
         return 'forever'
 

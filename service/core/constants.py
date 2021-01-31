@@ -1,3 +1,14 @@
+# --- START: IMPORTS
+
+# bult-in
+# local
+# django-specific
+from django.conf import settings
+
+# other/external
+# --- END: IMPORTS
+
+
 # commands
 COMMAND_START = 'start'
 COMMAND_TEST = 'test'
@@ -35,11 +46,20 @@ TEST_CLASSES_BY_RESULT = [
 CALLBACK_DATA_HEADER_SEPARATOR = '_'
 CALLBACK_DATA_SEPARATOR = '-'
 CALLBACK_DATA_HEADER_TEST = 'test'
+CALLBACK_DATA_HEADER_NEW_MEMBER = 'newmember'
 CALLBACK_DATA_TEST_TEMPLATE = CALLBACK_DATA_HEADER_SEPARATOR.join(
     [
         CALLBACK_DATA_HEADER_TEST,
         CALLBACK_DATA_SEPARATOR.join(
          ["{uid}", "{quiz_id}", "{index}", "{option_id}", "{current_score}"]
+        )
+    ]
+)
+CALLBACK_DATA_NEW_MEMBER_TEMPLATE = CALLBACK_DATA_SEPARATOR.join(
+    [
+        CALLBACK_DATA_HEADER_NEW_MEMBER,
+        CALLBACK_DATA_SEPARATOR.join(
+            ["{uid}", "{chat_id}"]
         )
     ]
 )
@@ -51,3 +71,6 @@ DEFAULT_CERT_LIMIT = 3
 DEFAULT_TEMP_MEDIA_FOLDER = 'temp'
 DEFUALT_RESTRICTION_SECONDS = 3600
 DEFAULT_BAN_LIMIT_SECONDS = 720 * 3600  # it is 720 hours in total, any user exceeding this limit will be banned
+
+# allowed groups
+ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID]

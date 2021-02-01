@@ -21,6 +21,23 @@ class Strings(object):
     new_member_not_agreed_yet = '⚠️ <a href="tg://user?id={uid}">{name}</a> qoidalarga shu paytgacha rozilik ' \
                                 'bildirmagan ko\'rinadi. Iltimos, quyidagi tugmani bosing va so\'ralgan topshiriqni ' \
                                 'bajaring. Undan keyin sizga shu guruhda yozish imkoniyatini beramiz;)'
+    new_member_button_pressed_by_wrong_user = "Qo'lingiz bilmasdan boshqa joyga tegib ketdi ;)\nShoshmang," \
+                                              " hali sizgayam boshqa biror tugma jo'natarmiz bosishga."
+    new_member_rules = "Python guruhida ushbu qoidalarga qat'iy amal qiling:\n\n - botlar haqida gaplashish;\n - " \
+                       "pythonga aloqasi bo'lmagan mavzularda gaplashish;\n - odob-axloq qoidalariga zid mazmundagi" \
+                       " gap-so'zlar;\n - guruhga ruxsatsiz bot qo'shish;\n - guruhga kanal, guruh, bot yoki boshqa" \
+                       " mahsulotlar reklamasini jo'natish;\n - xabar ustiga chiqib ketadigan darajadagi " \
+                       "belgilarning nikingiz (Telegramdagi taxallusingiz) ga yozilishi taqiqlanadi (Bu guruhda " \
+                       "o'qish samaradorligini oshirish uchun, iltimos, buni jiddiy qabul qiling).\nAgar shu " \
+                       "qoidalarga rozi bo'lsangiz hoziroq {key} so'zini yozib jo'nating. Unutmang, qoidaga qarshi" \
+                       " har qanday harakat jazoga olib kelishi mumkin."
+    new_member_congrats = "Juda yaxshi!\nPythonchilar davrasiga xush kelibsiz :)\n\nYana bir bor eslatib o'tamiz: " \
+                          "O'zingizni hurmat qiling va faqat Python haqida gaplashing!"
+    new_member_welcome = "Safimizda yangi a'zo bor!\nHozirgina <a href=\"tg://user?id={uid}\">{name}</a> guruh" \
+                         " qoidalariga rozilik bildirdi"
+    new_member_wrong_key = "Demak, siz bizning qoidalarni yo oxirigacha o'qimadingiz, yo rozi emassiz. Qoidalarga" \
+                           " rozi bo'lmaguncha guruhda yoza olmaysiz"
+    new_member_already_agreed = "Qoidalarga allaqachon rozilik bildirgansiz"
 
     # test
     start_test = "Kayfiyatlar qalay ;)\nXo'sh, hozir siz bor yo'g'i 10 dona test ishlaysiz, lekin shuning " \

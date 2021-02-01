@@ -32,11 +32,14 @@ from telebot import types
 import pytesseract
 from PIL import Image
 import pytz
+
 # --- END: IMPORTS
 
 
 # --- START: GLOBALS
 interpreter = Interpreter()
+
+
 # --- END: GLOBALS
 
 
@@ -46,7 +49,7 @@ class HopsBot(telebot.TeleBot):
     We'll be defining a bunch of custom behaviours here.
     """
     strings = Strings()
-    _id = None
+    _id = _username = None
 
     @property
     def id(self):
@@ -54,6 +57,12 @@ class HopsBot(telebot.TeleBot):
         if self._id is None:
             self._id = self.get_me().id
         return self._id
+
+    @property
+    def username(self):
+        if self._username is None:
+            self._username = bot.get_me().username
+        return self._username
 
     def is_member(self, uid: int, whitelist: List[int]) -> bool:
         """
@@ -271,7 +280,6 @@ class HopsBot(telebot.TeleBot):
         :param detected_topics: list of detected topics
         :return: None
         """
-        # print('warning message:', warning_message)
         restriction_logs = models.Restriction.filter(user=user)
         overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
         overall_seconds = overall_seconds if overall_seconds is not None else 0
@@ -339,7 +347,7 @@ def command_handler(message):
     # start command
     if command.startswith(constants.COMMAND_START) and message.chat.type == 'private':
         # check if it is a data-binded command
-        data = command.replace(constants.COMMAND_START, '', 1)
+        data = command.replace(f"{constants.COMMAND_START} ", '', 1)
         if not data:
             # it is a pure command without additional data
             # we need to do tha basic start procedure
@@ -351,6 +359,21 @@ def command_handler(message):
                 bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
                 bot.send_message(uid, text=bot.strings.start_test)
                 # hopefully we're done here
+            elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
+                chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]
+                # new user is requesting for rules
+                if user.agreement_time is not None:
+                    # already agreed
+                    bot.send_message(
+                        uid, bot.strings.new_member_already_agreed, parse_mode=constants.DEFAULT_PARSE_MODE)
+                else:
+                    bot.send_message(
+                        uid,
+                        bot.strings.new_member_rules.format(key=user.magic_word),
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
+                    # done
     elif command.startswith(constants.COMMAND_CANCEL) and message.chat.type == 'private':
         # this is where we handle cancellations
         # in any case, we just cancel whatever we were doing
@@ -361,6 +384,148 @@ def command_handler(message):
         # register the step & start
         bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
         bot.send_message(uid, text=bot.strings.start_test)
+
+
+# new chat members handler
+@bot.message_handler(content_types=['new_chat_member', 'new_chat_members'])
+@lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
+def new_chat_member_handler(message):
+    # we handle new users joining our group here
+    # we may have different scenarios:
+    # - just a new user joined
+    # - old user joined, but s/he didn't agree on our rules last time
+    # - old user joined, s/he already agreed on rules
+    # - old user joined, s/he was restricted, thus should wait until restriction expires
+
+    # having all scenarios taken into consideration, we start the implementation one by one
+    # let's check our guests
+    for guest in message.new_chat_members:
+        # if our bot is added to a group, we check if it is allowed group
+        if guest.id == bot.id:
+            if message.chat.id not in constants.ALLOWED_CHATS:
+                # this group is not allowed, so we are gonna leave
+                bot.leave_chat(message.chat.id)
+        elif not guest.is_bot:
+            # we have new member in our allowed chat
+            # our guest may have a very unpleasent nickname
+            # we are going to normalize it
+            guest_name = guest.first_name
+            if guest.last_name:
+                guest_name = " ".join((guest_name, guest.last_name))
+            guest_name = bot.strings.resize(guest_name, 20)
+            guest_name = bot.strings.clean_html(guest_name)
+            # we choose a key for each guest, they will have to find the key in order get access to write
+            key = random.choice(bot.strings.keys)
+            # prepare callback buttons for our guest
+            callback_data = constants.CALLBACK_DATA_NEW_MEMBER_TEMPLATE.format(
+                uid=guest.id,
+                chat_id=message.chat.id
+            )
+            markup = types.InlineKeyboardMarkup()
+            markup.add(
+                types.InlineKeyboardButton(
+                    text=bot.strings.new_member_button_text,
+                    callback_data=callback_data
+                )
+            )
+            user, new = models.User.objects.get_or_create(uid=guest.id)
+            # scenario 1: user is totally new
+            if new:
+                # try to restrict
+                try:
+                    bot.restrict_chat_member(
+                        message.chat.id, guest.id,
+                        can_send_messages=False,
+                        can_send_media_messages=False,
+                        can_send_other_messages=False,
+                        can_add_web_page_previews=False,
+                        can_invite_users=False
+                    )
+                    # restricted, now send a 'welcome' message
+                    welcome_message = bot.send_message(
+                        message.chat.id,
+                        bot.strings.new_member.format(name=guest_name),
+                        reply_markup=markup,
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    # we save message id, so that we can delete or edit it when user agrees to rules
+                    user.magic_word = key
+                    user.welcome_message_id = welcome_message.message_id
+                except telebot.apihelper.ApiTelegramException:
+                    # we probably could not restrict the user due to lack of admin rights
+                    logging.error(traceback.format_exc())
+                except Exception:
+                    # fatal error occured
+                    logging.error(traceback.format_exc())
+            else:
+                # since user is not new user, we may have old warning message
+                # we need to delete it
+                if user.welcome_message_id:
+                    try:
+                        bot.delete_message(message.chat.id, user.welcome_message_id)
+                    except:
+                        # if we can't, we can't
+                        pass
+                # scenario 2: user is old, and already agreed on rules
+                if user.agreement_time is not None:
+                    guest_info = bot.get_chat_member(message.chat.id, guest.id)
+                    # this scenario includes other two different scenarios
+                    # 1 - user is currently restricted
+                    # (was recentl punished for some reason and now is trying to re-join)
+                    # 2 - user is not restricted
+                    if not guest_info.can_send_messages and guest_info.until_date:
+                        until_date = datetime.fromtimestamp(guest_info.until_date).replace(
+                            tzinfo=timezone.get_current_timezone())
+                        # convert the time into human-redable string
+                        representable_until_date = until_date.strftime(
+                            bot.strings.restricted_until_time.format(
+                                day=until_date.day,
+                                month=bot.strings.month_to_str(until_date.month)
+                            )
+                        )
+                        # we warn the user
+                        bot.send_message(
+                            message.chat.id,
+                            bot.strings.new_member_already_restricted.format(
+                                uid=guest.id,
+                                name=guest_name,
+                                time=representable_until_date
+                            ),
+                            parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+                    else:
+                        # our old comrade has finally come back, let's give a hug
+                        bot.send_message(
+                            message.chat.id, bot.strings.new_member_old_comrade_back.format(
+                                uid=guest.id, name=guest_name
+                            ),
+                            parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+
+                # scenario 3: user id old, but didn't agree on rules
+                else:
+                    # user hasn't agreed to rules yet
+                    # let's remind
+                    bot.restrict_chat_member(
+                        message.chat.id, guest.id,
+                        can_send_messages=False,
+                        can_send_media_messages=False,
+                        can_send_other_messages=False,
+                        can_add_web_page_previews=False,
+                        can_invite_users=False
+                    )
+                    welcome_message = bot.send_message(
+                        message.chat.id,
+                        bot.strings.new_member_not_agreed_yet.format(
+                            uid=guest.id,
+                            name=guest_name
+                        ),
+                        reply_markup=markup,
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    user.welcome_message_id = welcome_message.message_id
+            user.magic_word = key
+            user.save()
 
 
 # here we try to handle text messages
@@ -401,6 +566,44 @@ def text_handler(message):
                 # what kinda name would include numbers? well, it would if you were the son of Elon,
                 # well, i'm 100% sure, that boy will never use the bot, so it is safe to do this.
                 bot.send_message(uid, bot.strings.test_full_name_invalid)
+        elif user.step == constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION:
+            # new user has sent key as a confirmation (for rules)
+            if text.lower() == user.magic_word:
+                # it is true, let's send a warm welocme message to our new comrade
+                # first of all, we lift all restrictions
+                chat_id = int(user.temp_data)
+                try:
+                    bot.restrict_chat_member(
+                        chat_id, uid,
+                        can_send_messages=True,
+                        can_send_media_messages=True,
+                        can_send_other_messages=True,
+                        can_add_web_page_previews=True,
+                        can_invite_users=True,
+                    )
+                    # edit welcome message
+                    new_member_name = message.from_user.first_name
+                    if message.from_user.last_name:
+                        new_member_name = " ".join([new_member_name, message.from_user.last_name])
+                    new_member_name = bot.strings.resize(new_member_name, 20)
+                    new_member_name = bot.strings.clean_html(new_member_name)
+                    bot.edit_message_text(
+                        chat_id=chat_id,
+                        message_id=user.welcome_message_id,
+                        text=bot.strings.new_member_welcome.format(uid=uid, name=new_member_name),
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    bot.send_message(uid, bot.strings.new_member_congrats)
+                    user.agreement_time = timezone.now()
+                    user.save()
+                    bot.set_next_step(user, constants.STEP_INITIAL_POINT)
+                except telebot.apihelper.ApiTelegramException:
+                    # probably we couldn't complete the task because bot has no enough admin rights
+                    logging.error(traceback.format_exc())
+            else:
+                # wrong key
+                bot.send_message(uid, bot.strings.new_member_wrong_key)
+
     # this is our main group chat (or other group chat)
     # what can we do in group:
     # + detect prohibited topics
@@ -478,132 +681,13 @@ def image_handler(message):
     # download the image
     dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
     img = Image.open(BytesIO(dl_file))
-    # combine caption text and extratced text from image
+    # combine caption text and extracted text from image
     text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
     # check for prohibited topics
     detected_topics = bot.detect_prohibited_topic(text)
     if detected_topics:
         # restrict & warn
         bot.restrict_with_warning(message, detected_topics, user)
-
-
-# new chat members handler
-@bot.message_handler(content_types=['new_chat_member', 'new_chat_members'])
-@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
-def new_chat_member_handler(message):
-    # we handle new users joining our group here
-    # we may have different scenarios:
-    # - just a new user joined
-    # - old user joined, but s/he didn't agree on our rules last time
-    # - old user joined, s/he already agreed on rules
-    # - old user joined, s/he was restricted, thus should wait until restriction expires
-
-    # having all scenarios taken into consideration, we start the implementation one by one
-    # let's check our guests
-    for guest in message.new_chat_members:
-        # if our bot is added to a group, we check if it is allowed group
-        if guest.id == bot.id:
-            if message.chat.id not in constants.ALLOWED_CHATS:
-                # this group is not allowed, so we are gonna leave
-                bot.leave_chat(message.chat.id)
-        elif not guest.is_bot:
-            # we have new member in our allowed chat
-            # our guest may have a very unpleasent nickname
-            # we are going to normalize it
-            guest_name = guest.first_name
-            if guest.last_name:
-                guest_name = " ".join((guest_name, guest.last_name))
-            guest_name = bot.strings.resize(guest_name, 20)
-            guest_name = bot.strings.clean_html(guest_name)
-            # we choose a key for each guest, they will have to find the key in order get access to write
-            key = random.choice(bot.strings.keys)
-            # prepare callback buttons for our guest
-            callback_data = constants.CALLBACK_DATA_NEW_MEMBER_TEMPLATE.format(
-                uid=guest.id,
-                chat_id=message.chat.it
-            )
-            markup = types.InlineKeyboardMarkup()
-            markup.add(
-                types.InlineKeyboardButton(
-                    text=bot.strings.new_member_button_text,
-                    callback_data=callback_data
-                )
-            )
-
-            user = models.User.get(uid=guest.id)
-            # scenario 1: user is totally new
-            if not user:
-                # since the user is new, let's start by adding to database
-                user = models.User.create(uid=guest.id)
-                # try to restrict
-                try:
-                    bot.restrict_chat_member(message.chat.id, guest.id, can_send_messages=False)
-                    # restricted, now send a 'welcome' message
-                    welcome_message = bot.send_message(
-                        message.chat.id,
-                        bot.strings.new_member,
-                        reply_markup=markup,
-                        parse_mode=constants.DEFAULT_PARSE_MODE
-                    )
-                    # we save message id, so that we can delete or edit it when user agrees to rules
-                    user.magic_word = key
-                    user.welcome_message_id = welcome_message.message_id
-                    user.save()
-                except telebot.apihelper.ApiTelegramException:
-                    # we probably could not restrict the user due to lack of admin rights
-                    logging.error(traceback.format_exc())
-                except Exception:
-                    # fatal error occured
-                    logging.error(traceback.format_exc())
-
-            # scenario 2: user is old, and already agreed on rules
-            elif user.agreement_time is not None:
-                guest_info = bot.get_chat_member(message.chat.id, guest.id)
-                # this scenario includes other two different scenarios
-                # 1 - user is currently restricted (was recentl punished for some reason and now is trying to re-join)
-                # 2 - user is not restricted
-                if not guest_info.can_send_messages:
-                    until_date = datetime.fromtimestamp(guest_info.until_date).replace(
-                        tzinfo=timezone.get_current_timezone())
-                    # convert the time into human-redable string
-                    representable_until_date = until_date.strftime(
-                        bot.strings.restricted_until_time.format(
-                            day=until_date.day,
-                            month=bot.strings.month_to_str(until_date.month)
-                        )
-                    )
-                    # we warn the user
-                    bot.send_message(
-                        message.chat.id,
-                        bot.strings.new_member_already_restricted.format(
-                            uid=guest.id,
-                            name=guest_name,
-                            time=representable_until_date
-                        ),
-                        parse_mode=constants.DEFAULT_PARSE_MODE
-                    )
-                else:
-                    # our old comrade has finally come back, let's give a hug
-                    bot.send_message(
-                        message.chat.id, bot.strings.new_member_old_comrade_back.format(
-                            uid=guest.id, name=guest_name
-                        ),
-                        parse_mode=constants.DEFAULT_PARSE_MODE
-                    )
-
-            # scenario 3: user id old, but didn't agree on rules
-            else:
-                # user hasn't agreed to rules yet
-                # let's remind
-                bot.send_message(
-                    message.chat.id,
-                    bot.strings.new_member_not_agreed_yet.format(
-                        uid=guest.id,
-                        name=guest_name
-                    ),
-                    reply_markup=markup,
-                    parse_mode=constants.DEFAULT_PARSE_MODE
-                )
 
 
 # handler for callback queries
@@ -733,7 +817,37 @@ def callback_handler(call):
                             reply_markup=markup,
                             parse_mode=constants.DEFAULT_PARSE_MODE
                         )
-
+    elif header == constants.CALLBACK_DATA_HEADER_NEW_MEMBER:
+        # new member is trying to read and agree on rules
+        # for this to happen we need to show
+        user_id, chat_id = map(int, data.split(constants.CALLBACK_DATA_SEPARATOR))
+        guest = models.User.get(uid=user_id)
+        # the button might have been pressed by another user, in that case we just give an alert to user
+        if uid != user_id:
+            if guest and guest.agreement_time is not None:
+                # message can be safely deleted, since user has already agreed
+                bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+            else:
+                bot.answer_callback_query(
+                    callback_query_id=call.id,
+                    text=bot.strings.new_member_button_pressed_by_wrong_user,
+                    show_alert=True
+                )
+        else:
+            # right person pressed the button
+            # if user has already agreed, we just finish the process here
+            if guest and guest.agreement_time is not None:
+                # already agreed
+                bot.answer_callback_query(
+                    call.id, text=bot.strings.new_member_already_agreed, show_alert=True)
+                bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
+            else:
+                # redirect him to bot chat where s/he can see rules
+                bot.answer_callback_query(
+                    call.id,
+                    url=f"https://t.me/{bot.username}?start="
+                        f"{constants.CALLBACK_DATA_HEADER_SEPARATOR.join([constants.CMD_DATA_RULES, str(call.message.chat.id)])}"
+                )
     # this is to ensure that we answered to the call
     bot.answer_callback_query(call.id)
 

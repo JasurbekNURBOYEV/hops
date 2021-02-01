@@ -12,9 +12,9 @@ strings = Strings()
 
 
 class Rex:
-    errors = result = stats = str
-    success = bool
-
+    """
+    To store Rextester API response
+    """
     def __init__(self, errors=None, result=None, stats=None, success=None):
         self.errors = errors
         self.result = result

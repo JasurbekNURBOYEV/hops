@@ -127,7 +127,5 @@ class Interpreter(object):
         """
         if response.errors:
             # there was error(s)
-            output = strings.code_result_error_template.format(errors=strings.clean_html(response.errors))
-        else:
-            output = strings.code_result_template.format(result=strings.clean_html(response.result))
-        return output
+            return strings.code_result_error_template.format(errors=strings.clean_html(response.errors))
+        return strings.code_result_template.format(result=strings.clean_html(response.result))

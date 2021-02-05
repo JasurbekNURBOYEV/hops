@@ -200,7 +200,6 @@ class HopsBot(telebot.TeleBot):
                             final_word += i[j - 1]
                     final_word += i[-1]
                     suspicious_words.add(final_word)
-                    # let see if the word matches with
             # check every word against target word
             for word in suspicious_words:
                 for target in targets:
@@ -276,7 +275,7 @@ class HopsBot(telebot.TeleBot):
 
     def get_daily_limit(self, user: models.User) -> int:
         """
-        Returns daily limit for a user
+        Returns daily limit for a user to run code in group
         :param user:
         :return:
         """
@@ -288,7 +287,7 @@ class HopsBot(telebot.TeleBot):
 
     def get_remaining_limit(self, user: models.User) -> int:
         """
-        Returns remaining limit for user
+        Returns remaining limit for user to run code in group
         :param user:
         :return:
         """
@@ -465,12 +464,12 @@ def new_chat_member_handler(message):
                     guest_info = bot.get_chat_member(message.chat.id, guest.id)
                     # this scenario includes other two different scenarios
                     # 1 - user is currently restricted
-                    # (was recentl punished for some reason and now is trying to re-join)
+                    # (was recently punished for some reason and now is trying to re-join)
                     # 2 - user is not restricted
                     if not guest_info.can_send_messages and guest_info.until_date:
                         until_date = datetime.fromtimestamp(guest_info.until_date).replace(
                             tzinfo=timezone.get_current_timezone())
-                        # convert the time into human-redable string
+                        # convert the time into human-readable string
                         representable_until_date = until_date.strftime(
                             bot.strings.restricted_until_time.format(
                                 day=until_date.day,
@@ -558,13 +557,12 @@ def text_handler(message):
                     bot.set_next_step(user, constants.STEP_TEST_ONGOING)
             else:
                 # that freaking user lied to us, this is definitely not his/her name
-                # what kinda name would include numbers? well, it would if you were the son of Elon,
-                # well, i'm 100% sure, that boy will never use the bot, so it is safe to do this.
+                # it has to be two words, one for name another for surname
                 bot.send_message(uid, bot.strings.test_full_name_invalid)
         elif user.step == constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION:
             # new user has sent key as a confirmation (for rules)
             if text.lower() == user.magic_word:
-                # it is true, let's send a warm welocme message to our new comrade
+                # it is true, let's send a warm welcome message to our new comrade
                 # first of all, we lift all restrictions
                 chat_id = int(user.temp_data)
                 try:
@@ -632,7 +630,7 @@ def text_handler(message):
             bot.send_message(message.chat.id, bot.strings.test_should_start_for_certificate,
                              reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
         else:
-            # user has certificate. we check if limit is still valid, if yes, we decrease it
+            # user has certificate. we check if s/he still can run code
             if not bot.can_run_code(message):
                 # user has already used all chances, need to wait for another day
                 bot.send_message(uid, bot.strings.code_limit_exceeded)
@@ -644,7 +642,7 @@ def text_handler(message):
                 requires_input = interpreter.advanced_input_detection(text)
                 if requires_input:
                     # if code requires input, we do not run it
-                    # when user replied to it with input data, then we run and show results
+                    # when user replies to it with input data, then we run and show results
                     # but if bot just stays silent, it might seem weird
                     # so we notify user in private about this
                     try:
@@ -859,7 +857,7 @@ def callback_handler(call):
                         )
     elif header == constants.CALLBACK_DATA_HEADER_NEW_MEMBER:
         # new member is trying to read and agree on rules
-        # for this to happen we need to show
+        # for this to happen we need to show rules (or redirect to rules)
         user_id, chat_id = map(int, data.split(constants.CALLBACK_DATA_SEPARATOR))
         guest = models.User.get(uid=user_id)
         # the button might have been pressed by another user, in that case we just give an alert to user
@@ -955,7 +953,6 @@ def edited_message_handler(message):
                 except:
                     # we could not delete, maybe we never had the response :\
                     pass
-                # save the edited code
             else:
                 response = interpreter.run(language, message.text)
                 if response.errors and message.chat.type != 'private':

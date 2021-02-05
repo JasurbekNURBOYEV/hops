@@ -729,20 +729,17 @@ def text_handler(message):
                             uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
                         )
                 # save the code
-                try:
-                    models.Code.create(
-                        chat_id=message.chat.id,
-                        user=user,
-                        language_code=code_language,
-                        string=text,
-                        requires_input=requires_input,
-                        message_id=message.message_id,
-                        result=result,
-                        errors=errors,
-                        response_message_id=response_message.message_id if response_message else None
-                    )
-                except:
-                    print(traceback.format_exc())
+                models.Code.create(
+                    chat_id=message.chat.id,
+                    user=user,
+                    language_code=code_language,
+                    string=text,
+                    requires_input=requires_input,
+                    message_id=message.message_id,
+                    result=result,
+                    errors=errors,
+                    response_message_id=response_message.message_id if response_message else None
+                )
     elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
         # if this is a reply, this might be reply to a code
         # which means, it can be input data for that code

@@ -367,6 +367,18 @@ class HopsBot(telebot.TeleBot):
             return True
         return False
 
+    def should_check_for_prohibited_topic(self, message) -> bool:
+        """
+        Detectes if the message should be analyzed for prohibited topics.
+        We don't do it if chat is private or user is admin or owner
+        :param message:
+        :return:
+        """
+        user_info = self.get_chat_member(message.chat.id, message.from_user.id)
+        if user_info and user_info.status in (constants.USER_STATUS_ADMIN, constants.USER_STATUS_OWNER):
+            return False
+        return message.chat.type != 'private'
+
 
 # --- START: definition of bot instance
 # initialize a bot instance
@@ -576,6 +588,7 @@ def text_handler(message):
     # what we do here is basically working with steps
     # we do whatever necessary according the current state of the user
     # so, let's start by checking steps
+    should_check_for_prohibited_topics = bot.should_check_for_prohibited_topic(message)
     if message.chat.type == 'private':
         # private chat is processed separately
         if user.step == constants.STEP_TEST_WAITING_TO_START:
@@ -650,10 +663,12 @@ def text_handler(message):
     # + what else?..
 
     # first of all, we need to check for prohibited topics
-    detected_topics = bot.detect_prohibited_topic(text)
-    if detected_topics:
-        # restrict & warn
-        bot.restrict_with_warning(message, detected_topics, user)
+    if should_check_for_prohibited_topics:
+        detected_topics = bot.detect_prohibited_topic(text)
+        if detected_topics:
+            # restrict & warn
+            bot.restrict_with_warning(message, detected_topics, user)
+            return
 
     # let's start code-running stuff here
     is_code, code_language = interpreter.detect_code(text)
@@ -679,18 +694,31 @@ def text_handler(message):
                 bot.send_message(uid, bot.strings.code_limit_exceeded)
             else:
                 # run it and show response
+                response_message = None
+                result = None
+                errors = None
                 requires_input = interpreter.advanced_input_detection(text)
                 if requires_input:
                     # if code requires input, we do not run it
                     # when user replied to it with input data, then we run and show results
                     # but if bot just stays silent, it might seem weird
                     # so we notify user in private about this
-                    bot.send_message(uid, bot.strings.code_please_provide_input)
+                    try:
+                        bot.send_message(
+                            uid,
+                            bot.strings.code_please_provide_input.format(input_header=constants.DEFAULT_INPUT_HEADER),
+                            parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+                    except:
+                        # it seems that user blocked us
+                        pass
                 else:
                     # since code doesn't require input, we run it immediately
                     response = interpreter.run(code_language, text)
+                    errors = response.errors
+                    result = response.result
                     formatted_output = interpreter.format_response(response)
-                    bot.reply_to(
+                    response_message = bot.reply_to(
                         message,
                         formatted_output,
                         parse_mode=constants.DEFAULT_PARSE_MODE
@@ -701,20 +729,26 @@ def text_handler(message):
                             uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
                         )
                 # save the code
-                models.Code.create(
-                    chat_id=message.chat.id,
-                    user=user,
-                    language_code=code_language,
-                    string=text,
-                    requires_input=requires_input,
-                    message_id=message.message_id
-                )
+                try:
+                    models.Code.create(
+                        chat_id=message.chat.id,
+                        user=user,
+                        language_code=code_language,
+                        string=text,
+                        requires_input=requires_input,
+                        message_id=message.message_id,
+                        result=result,
+                        errors=errors,
+                        response_message_id=response_message.message_id if response_message else None
+                    )
+                except:
+                    print(traceback.format_exc())
     elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
         # if this is a reply, this might be reply to a code
         # which means, it can be input data for that code
         # we'll check that here
-        input_data = text.replace(constants.DEFAULT_INPUT_HEADER, 1)
-        code = models.Code.get(message_id=message.reply_to_message.message_id)
+        input_data = text.replace(constants.DEFAULT_INPUT_HEADER, '', 1)
+        code = models.Code.get(chat_id=message.chat.id, message_id=message.reply_to_message.message_id)
         if code and code.requires_input:
             # this message was a reply to code
             response = interpreter.run(code.language_code, code.string, input_data=input_data)
@@ -924,5 +958,96 @@ def callback_handler(call):
             )
     # this is to ensure that we answered to the call
     bot.answer_callback_query(call.id)
+
+
+# handler for edited messages
+@bot.edited_message_handler(content_types=['text'])
+@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
+def edited_message_handler(message):
+    uid = message.from_user.id
+    cid = message.chat.id
+    user, new = models.User.objects.get_or_create(uid=uid)
+
+    # when message is edited, it migh mean:
+    # - code has been edited -> we need to re-run it & edit our response
+    # - just a message has been edited -> we need to check if it doesn't include prohibited topics
+
+    should_check_for_prohibited_topics = bot.should_check_for_prohibited_topic(message)
+    if should_check_for_prohibited_topics:
+        detected_topics = bot.detect_prohibited_topic(message.text)
+        if detected_topics:
+            # warn & restrict
+            bot.restrict_with_warning(message, detected_topics, user)
+            return
+    # it might be a code
+    existing_code = models.Code.get(chat_id=cid, message_id=message.message_id)
+    if existing_code:
+        # it was a code before, so this might be edited version of it
+        # if it is still code after editing, we edit our response,
+        # otherwise we delete our response
+        is_code, language = interpreter.detect_code(message.text)
+        if is_code:
+            requires_input = interpreter.advanced_input_detection(message.text)
+            if requires_input:
+                # let's send a useful tip to user
+                try:
+                    bot.send_message(
+                        existing_code.user.uid,
+                        bot.strings.code_please_provide_input.format(input_header=constants.DEFAULT_INPUT_HEADER),
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                except:
+                    # maybe we are blocked by user
+                    pass
+                # code requires input, so we can safely delete our response
+                # and wait for user input
+                try:
+                    bot.delete_message(cid, existing_code.response_message_id)
+                except:
+                    # we could not delete, maybe we never had the response :\
+                    pass
+                # save the edited code
+            else:
+                response = interpreter.run(language, message.text)
+                if response.errors:
+                    # let's send a useful tip to user
+                    try:
+                        bot.send_message(
+                            existing_code.user.uid, bot.strings.code_result_errors_detected_tip,
+                            parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+                    except:
+                        # we could not send message, maybe user blocked us
+                        pass
+                # response may include prohibited topics
+                if should_check_for_prohibited_topics and response.result:
+                    detected_topics = bot.detect_prohibited_topic(response.result)
+                    if detected_topics:
+                        # warn & restrict
+                        bot.send_message(cid, bot.strings.prohibited_topic_in_code_response)
+                        bot.restrict_with_warning(message, detected_topics, user)
+                        # we end process here by returning
+                        return
+                formatted_response = interpreter.format_response(response)
+                existing_code.errors = response.errors
+                existing_code.result = response.result
+                # if we had old response, we edit it, otherwise we send new message
+                if existing_code.response_message_id:
+                    # we might have old response
+                    try:
+                        bot.edit_message_text(chat_id=cid, message_id=existing_code.response_message_id,
+                                              text=formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    except telebot.apihelper.ApiTelegramException:
+                        # could not edit, let's try sending new message
+                        resp_msg = bot.reply_to(message, formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)
+                        existing_code.response_message_id = resp_msg.message_id
+                else:
+                    resp_msg = bot.reply_to(message, formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    existing_code.response_message_id = resp_msg.message_id
+            # save all changes
+            existing_code.string = message.text
+            existing_code.language_code = language
+            existing_code.requires_input = requires_input
+            existing_code.save()
 
 # --- END: definition of bot instance

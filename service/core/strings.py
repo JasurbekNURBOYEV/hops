@@ -76,9 +76,10 @@ class Strings(object):
 
     # code running
     code_please_provide_input = "Yozgan kodingiz input talab qiladigan kodga o'xshadi. Uni ishlatishim uchun" \
-                                "shu kodga reply qilib inputni yozing. Har bir qator bitta input uchun matn " \
+                                " shu kodga reply qilib inputni yozing. Har bir qator bitta input uchun matn " \
                                 "hisoblanadi. Kodingizda bir nechta input bo'lsa, bir necha qator matn bilan " \
-                                "reply qilishingiz mumkin."
+                                "reply qilishingiz mumkin. \n\nInput berish quyidagicha:\n\n" \
+                                "<code>{input_header}birinchi input\nikkinchi input\nuchinchi input...</code>"
     code_result_template = "<b>Natija</b>\n<code>{result}</code>"
     code_result_error_template = "<b>Xatolik</b>\n<code>{errors}</code>"
     code_result_errors_detected_tip = "Guruhda kod yozganingizda xatolik chiqmasligi uchun, avval kodni mana shu " \
@@ -92,6 +93,7 @@ class Strings(object):
                                 "gacha guruhda yozishdan cheklab qo'yildi. \nQuyidagi taqiqlangan mavzular " \
                                 "aniqlandi:\n{topics}"
     prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha: {words}\n{hint}"
+    prohibited_topic_in_code_response = "Kod natijasida taqiqlangan mavzu aniqlandi"
     restricted_until_time = '%Y-yil, {day}-{month}, soat %H:%M'
 
     # generally used strings
@@ -109,12 +111,16 @@ class Strings(object):
         :param text: input data
         :return: clean text
         """
+        if not text:
+            return text
         gt = (">", "&gt;")
         lt = ("<", "&lt;")
         amp = ("&", "&amp;")
         return text.replace(amp[0], amp[1]).replace(gt[0], gt[1]).replace(lt[0], lt[1])
 
     def resize(self, text, max_size: int) -> str:
+        if not text:
+            return text
         # resize the string and return it
         if len(text) > max_size:
             return f"{text[:max_size // 2]}...{text[-max_size // 2:]}"

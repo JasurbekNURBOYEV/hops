@@ -168,8 +168,11 @@ class Code(BaseLayer):
     string = models.CharField(max_length=4095)
     language_code = models.PositiveSmallIntegerField()
     requires_input = models.BooleanField(default=False)
+    errors = models.TextField(null=True)
+    result = models.TextField(null=True)
     chat_id = models.IntegerField()
     message_id = models.IntegerField()
+    response_message_id = models.IntegerField(null=True)
 
     def __str__(self):
         return f"{self.user}: {self.language_code}"

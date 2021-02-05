@@ -73,15 +73,19 @@ class Interpreter(object):
         :param code_string: code string
         :return: boolean
         """
-        # parse the string to AST object
-        parsed_code = ast.parse(code_string)
-        # walk through each node and search for input call
-        for node in ast.walk(parsed_code):
-            if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
-                if node.func.id == 'input':
-                    # we've just found a input() fucntion call
-                    return True
-        # probably there is no input() function call (we might've missed it tho)
+        try:
+            # parse the string to AST object
+            parsed_code = ast.parse(code_string)
+            # walk through each node and search for input call
+            for node in ast.walk(parsed_code):
+                if isinstance(node, ast.Call) and hasattr(node.func, 'id'):
+                    if node.func.id == 'input':
+                        # we've just found a input() fucntion call
+                        return True
+            # probably there is no input() function call (we might've missed it tho)
+        except:
+            # we might get syntax error while checking, we just skip it
+            pass
         return False
 
     def detect_code(self, text) -> [bool, int]:

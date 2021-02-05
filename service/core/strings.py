@@ -1,6 +1,7 @@
 """
 We store all strings for communication with users here
 """
+from typing import List, Tuple
 
 
 class Strings(object):
@@ -142,3 +143,58 @@ class Strings(object):
             12: 'dekabr'
         }
         return months.get(month, '¯\_(ツ)_/¯')
+
+    def clean_text(self, text: str, spoilers: List[Tuple[str]]) -> str:
+        """
+        To clean the text from redundant chars...
+        :param text: incoming message text
+        :param spoilers: spoiler words and their alternatives
+        :return: clean text
+        """
+        # reveal spoilers in text
+        for spoiler, alternative in spoilers:
+            text = text.replace(spoiler, alternative)
+        # get rid of non-numeric & non-alpha chars
+        for char in text:
+            if not char.isalnum() and char != " ":
+                text = text.replace(char, "")
+        # translate kirill text
+        letters = {
+            'а': 'a',
+            'б': 'b',
+            'д': 'd',
+            'э': 'e',
+            'ф': 'f',
+            'г': 'g',
+            'ҳ': 'h',
+            'и': 'i',
+            'ж': 'j',
+            'к': 'k',
+            'л': 'l',
+            'м': 'm',
+            'н': 'n',
+            'о': 'o',
+            'п': 'p',
+            'қ': 'q',
+            'р': 'r',
+            'с': 's',
+            'т': 't',
+            'у': 'u',
+            'в': 'b',
+            'х': 'x',
+            'й': 'y',
+            'з': 'z',
+            'ў': 'o\'',
+            'ғ': 'g\'',
+            'ш': 'sh',
+            'ч': 'ch',
+            'е': 'ye',
+            'ё': 'yo',
+            'ю': 'yu',
+            'я': 'ya',
+            'ъ': '\'',
+            'ы': 'y'
+        }
+        for letter, translation in letters.items():
+            text = text.replace(letter, translation)
+        return text

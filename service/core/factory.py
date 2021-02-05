@@ -106,13 +106,8 @@ class HopsBot(telebot.TeleBot):
         :return: None
         """
         uid = message.from_user.id
-        instance, new = models.User.objects.get_or_create(uid=uid)
-        if new:
-            # we have a new user
-            self.send_message(chat_id=uid, text="Hola")
-        else:
-            self.send_message(uid, "Hey!")
-        # TODO: complete this, because it is incomplete
+        models.User.objects.get_or_create(uid=uid)
+        self.send_message(uid, self.strings.welcome)
 
     def set_next_step(self, user: models.User, step: int, temp_data: str = None) -> None:
         """
@@ -197,6 +192,7 @@ class HopsBot(telebot.TeleBot):
                 lets = "[a-z0-9]*"
                 pattern = f"{lets}{target_word[0]}{s}{s.join([i for i in target_word[1:-1]])}{s}{target_word[-1]}{lets}"
                 for i in re.findall(pattern, clean_text):
+                    i = i.replace(' ', '')
                     final_word = ""
                     # remove repeated chars in one place
                     for j in range(1, len(i)):
@@ -263,11 +259,14 @@ class HopsBot(telebot.TeleBot):
                 can_send_other_messages=False,
                 can_add_web_page_previews=False,
                 can_invite_users=False,
+                can_send_polls=False,
                 until_date=int(until_date.timestamp())
             )
             self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
             # create restriction log
             models.Restriction.create(user=user, seconds=next_restriction_seconds)
+            # try to delete message
+            bot.delete_message(message.chat.id, message.message_id)
             # done
         except telebot.apihelper.ApiTelegramException as e:
             # we couldn't restrict, bot might not be an admin or some kind of fatal error occured
@@ -662,6 +661,14 @@ def text_handler(message):
                     response = interpreter.run(code_language, text)
                     errors = response.errors
                     result = response.result
+                    if should_check_for_prohibited_topics and result:
+                        # code response might include prohibited topics
+                        detected_topics = bot.detect_prohibited_topic(result)
+                        if detected_topics:
+                            # warn & restrict
+                            bot.send_message(message.chat.id, bot.strings.prohibited_topic_in_code_response)
+                            bot.restrict_with_warning(message, detected_topics, user)
+                            return
                     formatted_output = interpreter.format_response(response)
                     response_message = bot.reply_to(
                         message,
@@ -951,7 +958,7 @@ def edited_message_handler(message):
                 # save the edited code
             else:
                 response = interpreter.run(language, message.text)
-                if response.errors:
+                if response.errors and message.chat.type != 'private':
                     # let's send a useful tip to user
                     try:
                         bot.send_message(

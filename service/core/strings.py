@@ -9,6 +9,8 @@ class Strings(object):
     The class mostly consists of static fields
     """
     # strings related to testing process
+    welcome = "Hey! Ahvollar qalay!"
+    you_are_not_a_member = "Botdan foydalanish uchun asosiy guruh a'zosi bo'lishingiz kerak."
 
     # new member
     new_member = "Salom {name}! Python guruhiga xush kelibsiz!\n\nSiz hozir guruhda faqat o'qiy olasiz. Yozish " \

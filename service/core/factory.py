@@ -25,6 +25,7 @@ from django.core.files import File
 from django.utils import timezone
 from django.conf import settings
 from django.db.models import Sum
+from django.db.models import Q
 
 # other/external
 import telebot
@@ -122,7 +123,7 @@ class HopsBot(telebot.TeleBot):
         :return: none
         """
         user.step = step
-        user.temp_data = temp_data
+        user.temp_data = temp_data if temp_data is not None else user.temp_data
         user.save()
 
     def generate_quiz(
@@ -349,9 +350,22 @@ class HopsBot(telebot.TeleBot):
         """
         today = timezone.now()
         start_of_the_day = datetime(today.year, today.month, today.day)
-        recent_codes = models.Code.filter(user=user, created_time__gte=start_of_the_day)
+        recent_codes = models.Code.filter(user=user, created_time__gte=start_of_the_day).filter(~Q(chat_id=user.uid))
         daily_limit = self.get_daily_limit(user)
         return daily_limit - recent_codes.count()
+
+    def can_run_code(self, message) -> bool:
+        """
+        Detects whether user can run code or not
+        :return:
+        """
+        user = models.User.get(uid=message.from_user.id)
+        user_status = self.get_chat_member(message.chat.id, message.from_user.id).status
+        if user_status in (constants.USER_STATUS_ADMIN, constants.USER_STATUS_OWNER):
+            return True
+        elif user and self.get_remaining_limit(user) >= 1:
+            return True
+        return False
 
 
 # --- START: definition of bot instance
@@ -660,7 +674,7 @@ def text_handler(message):
                              reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
         else:
             # user has certificate. we check if limit is still valid, if yes, we decrease it
-            if bot.get_remaining_limit(user) <= 0:
+            if not bot.can_run_code(message):
                 # user has already used all chances, need to wait for another day
                 bot.send_message(uid, bot.strings.code_limit_exceeded)
             else:
@@ -891,6 +905,23 @@ def callback_handler(call):
                     url=f"https://t.me/{bot.username}?start="
                         f"{constants.CALLBACK_DATA_HEADER_SEPARATOR.join([constants.CMD_DATA_RULES, str(call.message.chat.id)])}"
                 )
+    elif header == constants.CALLBACK_DATA_HEADER_START_TEST:
+        # user is gonna start a test for certification
+        # we check if right user clicked
+        if uid == int(data):
+            # this is ok
+            bot.answer_callback_query(
+                call.id,
+                url=f"https://t.me/{bot.username}?start={constants.CMD_DATA_START_TEST}"
+            )
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        else:
+            # someone else clicked
+            bot.answer_callback_query(
+                call.id,
+                text=bot.strings.test_start_button_clicked_by_wrong_user,
+                show_alert=True
+            )
     # this is to ensure that we answered to the call
     bot.answer_callback_query(call.id)
 

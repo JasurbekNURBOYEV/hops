@@ -44,6 +44,11 @@ class Strings(object):
                  "o'zi yetarli bo'ladi. Demak, testni boshlashdan avval tanishib olsak. Ism va familiyangizni" \
                  " Ism Familiya shaklida yozib jo'nating. Masalan:\n  Eshmatjon Toshmatov\n\nIltimos, ma'lumotni" \
                  " to'g'ri kiriting, ism va familiyangiz sertifikatingizga yoziladi."
+    test_start_inline_button_text = "Bu yerga bosing"
+    test_should_start_for_certificate = "Guruhda kod yozishuchun sertifikat omabsizu!\nBu nari borsa 5 daqiqa vaqt " \
+                                        "oladi, sertifikat olish uchun pastdagi tugmani bosing."
+    test_start_button_clicked_by_wrong_user = "Bu tugmani sizga jo'natmagandim, anavi akaxonimizga aytib qo'ying, " \
+                                              "tezroq harakatini qilsin. Baribir sertifikat omaguncha qo'ymayman!"
     test_question_template = "<b>{index}-savol</b>\n{question}"
     test_quizzes_not_found = "Bermoqchi bo'lgan savollarimni unutib qo'ydim... Kamina borib savollarni qidirib " \
                              "kelaman. Bu balki 1 soat olar, balki 1 oy, yil... Biroz vaqt o'tib yana qayta kelib " \
@@ -80,6 +85,7 @@ class Strings(object):
                                       "yerda <b>o'zimga jo'nating</b>, xatolari bo'lsa ko'rib, tuzatvolib, keyin " \
                                       "guruhga jo'natasiz. \n<b>Bu orqali siz guruhdagi kunlik limitlaringizni saqlab" \
                                       " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
+    code_limit_exceeded = "Bugungi kun uchun limitlaringiz tugab qoldi, ertaga yana kod yoa olasiz"
 
     # prohibited topics
     prohibited_topic_detected = "{user_name} [<code>{user_id}</code>] taqiqlangan mavzudagi gaplari uchun {date} " \

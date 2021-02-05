@@ -14,7 +14,6 @@ COMMAND_START = 'start'
 COMMAND_TEST = 'test'
 COMMAND_CANCEL = 'cancel'
 
-
 # command data prefixes
 CMD_DATA_START_TEST = 'test'
 CMD_DATA_BOOK_COMMENT = 'bookcomment'
@@ -51,12 +50,23 @@ TEST_CLASSES_BY_RESULT = [
 CALLBACK_DATA_HEADER_SEPARATOR = '_'
 CALLBACK_DATA_SEPARATOR = '|'
 CALLBACK_DATA_HEADER_TEST = 'test'
+CALLBACK_DATA_HEADER_START_TEST = 'start test'
+CALLBACK_DATA_START_TEST_TEMPLATE = CALLBACK_DATA_HEADER_SEPARATOR.join(
+    [
+        CALLBACK_DATA_HEADER_START_TEST,
+        CALLBACK_DATA_SEPARATOR.join(
+            [
+                "{uid}"
+            ]
+        )
+    ]
+)
 CALLBACK_DATA_HEADER_NEW_MEMBER = 'newmember'
 CALLBACK_DATA_TEST_TEMPLATE = CALLBACK_DATA_HEADER_SEPARATOR.join(
     [
         CALLBACK_DATA_HEADER_TEST,
         CALLBACK_DATA_SEPARATOR.join(
-         ["{uid}", "{quiz_id}", "{index}", "{option_id}", "{current_score}"]
+            ["{uid}", "{quiz_id}", "{index}", "{option_id}", "{current_score}"]
         )
     ]
 )

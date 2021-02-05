@@ -329,6 +329,30 @@ class HopsBot(telebot.TeleBot):
         except Exception as fe:
             logging.error(fe)
 
+    def get_daily_limit(self, user: models.User) -> int:
+        """
+        Returns daily limit for a user
+        :param user:
+        :return:
+        """
+        certificate = models.Certificate.filter(user=user).last()
+        for name, percentage, limit in constants.TEST_CLASSES_BY_RESULT:
+            if certificate.percentage / 100 >= percentage:
+                return limit
+        return 0
+
+    def get_remaining_limit(self, user: models.User) -> int:
+        """
+        Returns remaining limit for user
+        :param user:
+        :return:
+        """
+        today = timezone.now()
+        start_of_the_day = datetime(today.year, today.month, today.day)
+        recent_codes = models.Code.filter(user=user, created_time__gte=start_of_the_day)
+        daily_limit = self.get_daily_limit(user)
+        return daily_limit - recent_codes.count()
+
 
 # --- START: definition of bot instance
 # initialize a bot instance
@@ -621,37 +645,56 @@ def text_handler(message):
     is_code, code_language = interpreter.detect_code(text)
     if is_code:
         # we have a runnable code
-        # run it and show response
-        requires_input = interpreter.advanced_input_detection(text)
-        if requires_input:
-            # if code requires input, we do not run it
-            # when user replied to it with input data, then we run and show results
-            # but if bot just stays silent, it might seem weird
-            # so we notify user in private about this
-            bot.send_message(uid, bot.strings.code_please_provide_input)
-        else:
-            # since code doesn't require input, we run it immediately
-            response = interpreter.run(code_language, text)
-            formatted_output = interpreter.format_response(response)
-            bot.reply_to(
-                message,
-                formatted_output,
-                parse_mode=constants.DEFAULT_PARSE_MODE
-            )
-            if response.errors and message.chat.type != 'private':
-                # let's send a tip to user
-                bot.send_message(
-                    uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
+        # first we check if user has certificate & limit didn't exceed
+        last_certificate = models.Certificate.filter(user=user).last()
+        if not last_certificate:
+            # user has no certificate, let's offer him/her a test
+            markup = types.InlineKeyboardMarkup()
+            markup.add(
+                types.InlineKeyboardButton(
+                    text=bot.strings.test_start_inline_button_text,
+                    callback_data=constants.CALLBACK_DATA_START_TEST_TEMPLATE.format(uid=uid)
                 )
-        # save the code
-        models.Code.create(
-            chat_id=message.chat.id,
-            user=user,
-            language_code=code_language,
-            string=text,
-            requires_input=requires_input,
-            message_id=message.message_id
-        )
+            )
+            bot.send_message(message.chat.id, bot.strings.test_should_start_for_certificate,
+                             reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
+        else:
+            # user has certificate. we check if limit is still valid, if yes, we decrease it
+            if bot.get_remaining_limit(user) <= 0:
+                # user has already used all chances, need to wait for another day
+                bot.send_message(uid, bot.strings.code_limit_exceeded)
+            else:
+                # run it and show response
+                requires_input = interpreter.advanced_input_detection(text)
+                if requires_input:
+                    # if code requires input, we do not run it
+                    # when user replied to it with input data, then we run and show results
+                    # but if bot just stays silent, it might seem weird
+                    # so we notify user in private about this
+                    bot.send_message(uid, bot.strings.code_please_provide_input)
+                else:
+                    # since code doesn't require input, we run it immediately
+                    response = interpreter.run(code_language, text)
+                    formatted_output = interpreter.format_response(response)
+                    bot.reply_to(
+                        message,
+                        formatted_output,
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+                    if response.errors and message.chat.type != 'private':
+                        # let's send a tip to user
+                        bot.send_message(
+                            uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+                # save the code
+                models.Code.create(
+                    chat_id=message.chat.id,
+                    user=user,
+                    language_code=code_language,
+                    string=text,
+                    requires_input=requires_input,
+                    message_id=message.message_id
+                )
     elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
         # if this is a reply, this might be reply to a code
         # which means, it can be input data for that code

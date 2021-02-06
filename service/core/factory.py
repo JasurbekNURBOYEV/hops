@@ -519,6 +519,8 @@ def new_chat_member_handler(message):
                     user.welcome_message_id = welcome_message.message_id
             user.magic_word = key
             user.save()
+    # try to delete service message
+    bot.delete_message(message.chat.id, message.message_id)
 
 
 # here we try to handle text messages

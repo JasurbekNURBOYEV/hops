@@ -92,3 +92,6 @@ ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID, settings.BOARD_
 
 # admins
 ADMIN_ALERT_KEYWORD = '@admins'
+
+# tips
+TIPS_HEADER = '!'

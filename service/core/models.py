@@ -190,3 +190,17 @@ class Restriction(BaseLayer):
 
     class Meta:
         db_table = 'restrictions'
+
+
+class Tip(BaseLayer):
+    """
+    We will store useful tips here
+    """
+    key = models.CharField(max_length=15, unique=True)
+    message = models.TextField()
+
+    def __str__(self):
+        return f"{self.key}: {''.join([self.message[:30], ['', '...'][len(self.message) > 30]])}"
+
+    class Meta:
+        db_table = 'tips'

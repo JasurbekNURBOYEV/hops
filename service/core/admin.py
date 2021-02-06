@@ -15,3 +15,4 @@ class QuizAdmin(admin.ModelAdmin):
 
 admin.site.register(models.User)
 admin.site.register(models.Certificate)
+admin.site.register(models.Tip)

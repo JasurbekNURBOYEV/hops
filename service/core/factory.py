@@ -95,7 +95,7 @@ class HopsBot(telebot.TeleBot):
 
     def notify_about_membership(self, message) -> None:
         try:
-            self.send_message(message.from_user.id, "You have to be a member of main group")
+            self.send_message(message.from_user.id, self.strings.you_are_not_a_member)
         except:
             pass
 
@@ -650,6 +650,21 @@ def text_handler(message):
         except:
             # fatal error
             logging.error(traceback.format_exc())
+
+    # check for tips
+    if message.reply_to_message and message.text.startswith(constants.TIPS_HEADER):
+        # search for this tip from database
+        key = message.text.replace(constants.TIPS_HEADER, '', 1)
+        tip = models.Tip.get(key=key)
+        if tip:
+            # we found a tip, let's send it
+            # we send it as a reply to a message which this current message was replying to
+            # but it might be deleted while we were searching for tips
+            try:
+                bot.reply_to(message.reply_to_message, tip.message, parse_mode=constants.DEFAULT_PARSE_MODE)
+            except:
+                # we could not reply, maybe message is already deleted
+                pass
 
     # first of all, we need to check for prohibited topics
     if should_check_for_prohibited_topics:

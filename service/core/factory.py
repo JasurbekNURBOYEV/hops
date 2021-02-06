@@ -794,6 +794,27 @@ def image_handler(message):
         bot.restrict_with_warning(message, detected_topics, user)
 
 
+# edited photo handler
+@bot.edited_message_handler(content_types=['photo'])
+@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
+def edited_image_handler(message):
+    uid = message.from_user.id
+    user, new = models.User.objects.get_or_create(uid=uid)
+    photo = message.photo[-1]
+    # get the caption text
+    text = message.caption if message.caption else ""
+    # download the image
+    dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
+    img = Image.open(BytesIO(dl_file))
+    # combine caption text and extracted text from image
+    text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
+    # check for prohibited topics
+    detected_topics = bot.detect_prohibited_topic(text)
+    if detected_topics:
+        # restrict & warn
+        bot.restrict_with_warning(message, detected_topics, user)
+
+
 # handler for callback queries
 @bot.callback_query_handler(lambda call: True)
 @lock_method_for_strangers(bot.is_member, bot.notify_about_membership)

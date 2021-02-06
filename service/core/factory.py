@@ -262,7 +262,8 @@ class HopsBot(telebot.TeleBot):
             )
             msg = self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
             # create restriction log
-            models.Restriction.create(user=user, seconds=next_restriction_seconds, restriction_message_id=msg.message_id)
+            models.Restriction.create(user=user, seconds=next_restriction_seconds,
+                                      restriction_message_id=msg.message_id)
             # try to delete message
             bot.delete_message(message.chat.id, message.message_id)
             # done
@@ -334,6 +335,7 @@ class HopsBot(telebot.TeleBot):
         elif uid == settings.DEV_ID:
             return True
         return False
+
 
 # --- START: definition of bot instance
 # initialize a bot instance
@@ -687,7 +689,8 @@ def text_handler(message):
         try:
             if cmd.startswith(constants.ADMIN_CMD_RO):
                 # work on "Read-Only" stuff
-                restriction = models.Restriction.filter(restriction_message_id=message.reply_to_message.message_id).last()
+                restriction = models.Restriction.filter(
+                    restriction_message_id=message.reply_to_message.message_id).last()
                 if restriction:
                     # we try to unrestrict
                     if restriction.seconds > 0:
@@ -719,7 +722,7 @@ def text_handler(message):
                     last_restriction_time = (0, 0)
                     if last_restriction:
                         delta_object = timedelta(seconds=last_restriction.seconds)
-                        last_restriction_time = (delta_object.days, delta_object.seconds//3600)
+                        last_restriction_time = (delta_object.days, delta_object.seconds // 3600)
                     remaining_daily_limit = bot.get_remaining_limit(target_user)
                     detail_message = bot.strings.admin_check_user_details_template.format(
                         certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%" if certificate else "-",

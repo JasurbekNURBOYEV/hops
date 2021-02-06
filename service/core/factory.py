@@ -260,9 +260,9 @@ class HopsBot(telebot.TeleBot):
                 can_invite_users=False,
                 until_date=int(until_date.timestamp())
             )
-            self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+            msg = self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
             # create restriction log
-            models.Restriction.create(user=user, seconds=next_restriction_seconds)
+            models.Restriction.create(user=user, seconds=next_restriction_seconds, restriction_message_id=msg.message_id)
             # try to delete message
             bot.delete_message(message.chat.id, message.message_id)
             # done
@@ -321,6 +321,19 @@ class HopsBot(telebot.TeleBot):
             return False
         return message.chat.type != 'private'
 
+    def is_commander(self, cid, uid) -> bool:
+        """
+        We can detect here if user can use admin commands or not
+        :param cid:
+        :param uid:
+        :return:
+        """
+        user_info = self.get_chat_member(cid, uid)
+        if user_info and user_info.status in (constants.USER_STATUS_ADMIN, constants.USER_STATUS_OWNER):
+            return True
+        elif uid == settings.DEV_ID:
+            return True
+        return False
 
 # --- START: definition of bot instance
 # initialize a bot instance
@@ -527,6 +540,7 @@ def new_chat_member_handler(message):
 @lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
 def text_handler(message):
     uid = message.from_user.id
+    cid = message.chat.id
     text = message.text
     user, new = models.User.objects.get_or_create(uid=uid)
     # what we do here is basically working with steps
@@ -666,6 +680,56 @@ def text_handler(message):
             except:
                 # we could not reply, maybe message is already deleted
                 pass
+
+    # check for admin commands
+    if message.reply_to_message and text.startswith(constants.ADMIN_CMD_HEADER) and bot.is_commander(cid, uid):
+        cmd = message.text.replace(constants.ADMIN_CMD_HEADER, '', 1)
+        try:
+            if cmd.startswith(constants.ADMIN_CMD_RO):
+                # work on "Read-Only" stuff
+                restriction = models.Restriction.filter(restriction_message_id=message.reply_to_message.message_id).last()
+                if restriction:
+                    # we try to unrestrict
+                    if restriction.seconds > 0:
+                        restriction.seconds -= constants.DEFUALT_RESTRICTION_SECONDS
+                        try:
+                            bot.restrict_chat_member(
+                                message.chat.id,
+                                restriction.user.uid,
+                                can_send_messages=True,
+                                can_send_media_messages=True,
+                                can_send_other_messages=True,
+                                can_add_web_page_previews=True,
+                                can_invite_users=True,
+                            )
+                        except:
+                            logging.error(traceback.format_exc())
+                        bot.reply_to(message, bot.strings.restrictions_lifted, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    else:
+                        # user has 0 (or less) restriction time, we can't do anything here
+                        # we send a useful tip to user
+                        bot.send_message(uid, bot.strings.restriction_cant_lift_time_too_little,
+                                         parse_mode=constants.DEFAULT_PARSE_MODE)
+            elif cmd.startswith(constants.ADMIN_CMD_CHECK):
+                # we check user info and send it
+                target_user = models.User.get(uid=message.reply_to_message.from_user.id)
+                if target_user:
+                    certificate = models.Certificate.filter(user=target_user).last()
+                    last_restriction = models.Restriction.filter(user=target_user).last()
+                    last_restriction_time = (0, 0)
+                    if last_restriction:
+                        delta_object = timedelta(seconds=last_restriction.seconds)
+                        last_restriction_time = (delta_object.days, delta_object.seconds//3600)
+                    remaining_daily_limit = bot.get_remaining_limit(target_user)
+                    detail_message = bot.strings.admin_check_user_details_template.format(
+                        certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%" if certificate else "-",
+                        last_restriction=f"{last_restriction_time[0]} kun, {last_restriction_time[1]} soat",
+                        remaining_daily_limit=remaining_daily_limit
+                    )
+                    bot.delete_message(cid, message.message_id)
+                    bot.send_message(uid, detail_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+        except:
+            logging.error(traceback.format_exc())
 
     # first of all, we need to check for prohibited topics
     if should_check_for_prohibited_topics:

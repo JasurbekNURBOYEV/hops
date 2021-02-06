@@ -98,12 +98,18 @@ class Strings(object):
     prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha: {words}\n{hint}"
     prohibited_topic_in_code_response = "Kod natijasida taqiqlangan mavzu aniqlandi"
     restricted_until_time = '%Y-yil, {day}-{month}, soat %H:%M'
+    restrictions_lifted = "Oxirgi cheklov olib tashlandi"
+    restriction_cant_lift_time_too_little = "Hey! Cheklov vaqti allaqachon judayam kichkina (balki 0 dan kichikroq), " \
+                                            "boshqa cheklovni kamaytirolmaymiz"
 
     # admins
     admins_chaos_disorder = "Shovqin ko'tarildi! Trevoga: <a href=\"https://t.me/{chat_id}/{message_id}\">xabar</a>"
     admins_alerted_tip_for_user = "Hey! Kapitanlar xavfdan ogohlantirildi. Lekin bu rostanam hammani bezovta " \
                                   "qilishga arzirmidi? Har doim ogohlantirishdan avval shuni o'ylab ko'ring. " \
                                   "Xabarni kapitanlarimiz tekshirib chiqishadi, ogohlantirish uchun rahmat ✌️"
+    admin_check_user_details_template = "<b>Sertifikat:</b> {certificate}\n" \
+                                        "<b>Oxirgi cheklov:</b> {last_restriction}\n" \
+                                        "<b>Kunlik limit:</b> {remaining_daily_limit}"
 
     # generally used strings
     cancelled = "Jarayon bekor qilindi"

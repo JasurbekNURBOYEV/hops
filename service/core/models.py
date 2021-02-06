@@ -187,6 +187,7 @@ class Restriction(BaseLayer):
     """
     user = models.ForeignKey(User, models.CASCADE, related_name='restrictions')
     seconds = models.IntegerField()
+    restriction_message_id = models.IntegerField(null=True)
 
     class Meta:
         db_table = 'restrictions'

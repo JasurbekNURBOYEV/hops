@@ -12,3 +12,5 @@ services:
       - hops_vol:/var/hops
 volumes:
   hops_vol:
+    external: true
+

@@ -258,7 +258,6 @@ class HopsBot(telebot.TeleBot):
                 can_send_other_messages=False,
                 can_add_web_page_previews=False,
                 can_invite_users=False,
-                can_send_polls=False,
                 until_date=int(until_date.timestamp())
             )
             self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)

@@ -72,10 +72,12 @@ WSGI_APPLICATION = 'service.service.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+MAPPING_VOLUME_PATH = '/var/hops'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': f'{MAPPING_VOLUME_PATH}/db.sqlite3',
     }
 }
 
@@ -135,6 +137,7 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = f'{MAPPING_VOLUME_PATH}/static/'
 CONTROL_PAGE_URL = os.environ.get('CONTROL_PAGE_URL')
 
 # HOPS-SPECIFIC CONFIGS

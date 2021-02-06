@@ -8,3 +8,7 @@ services:
     command: daphne -b 0.0.0.0 -p 1254 service.service.asgi:application
     env_file:
       - .env
+    volumes:
+      - hops_vol:/var/hops
+volumes:
+  hops_vol:

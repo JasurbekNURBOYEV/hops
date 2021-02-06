@@ -99,6 +99,12 @@ class Strings(object):
     prohibited_topic_in_code_response = "Kod natijasida taqiqlangan mavzu aniqlandi"
     restricted_until_time = '%Y-yil, {day}-{month}, soat %H:%M'
 
+    # admins
+    admins_chaos_disorder = "Shovqin ko'tarildi! Trevoga: <a href=\"https://t.me/{chat_id}/{message_id}\">xabar</a>"
+    admins_alerted_tip_for_user = "Hey! Kapitanlar xavfdan ogohlantirildi. Lekin bu rostanam hammani bezovta " \
+                                  "qilishga arzirmidi? Har doim ogohlantirishdan avval shuni o'ylab ko'ring. " \
+                                  "Xabarni kapitanlarimiz tekshirib chiqishadi, ogohlantirish uchun rahmat ✌️"
+
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"

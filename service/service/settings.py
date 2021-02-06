@@ -141,6 +141,7 @@ CONTROL_PAGE_URL = os.environ.get('CONTROL_PAGE_URL')
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 MAIN_GROUP_ID = int(os.environ.get('MAIN_GROUP_ID'))
 TEST_GROUP_ID = int(os.environ.get('TEST_GROUP_ID'))
+BOARD_GROUP_ID = int(os.environ.get('BOARD_GROUP_ID'))
 TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
 DEV_ID = int(os.environ.get('DEV_ID'))
 PROHIBITED_TOPICS = [

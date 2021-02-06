@@ -88,4 +88,7 @@ DEFUALT_RESTRICTION_SECONDS = 3600
 DEFAULT_BAN_LIMIT_SECONDS = 720 * 3600  # it is 720 hours in total, any user exceeding this limit will be banned
 
 # allowed groups
-ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID]
+ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID, settings.BOARD_GROUP_ID]
+
+# admins
+ADMIN_ALERT_KEYWORD = '@admins'

@@ -604,6 +604,53 @@ def text_handler(message):
     # + handle management commands
     # + what else?..
 
+    # let's start with management commands
+    # - admins alert: user can alert all admins at once by using special keyword
+    # - tips: users can reply to messages and send useful tips to other users (e.g: this is offtopic, offtopic means...)
+    # - ..?
+
+    # admins alert
+    if text == constants.ADMIN_ALERT_KEYWORD and message.reply_to_message and message.chat.type != 'private':
+        # it has to be keyword and reply
+        # we send details to borad group
+        try:
+            chat_info = bot.get_chat(message.chat.id)
+            chat_identifier = chat_info.username
+            if not chat_info.username:
+                if str(chat_info.id).startswith('-100'):
+                    chat_short_id = str(chat_info.id)[3:]
+                else:
+                    chat_short_id = str(chat_info.id)[1:]
+                chat_identifier = f"c/{chat_short_id}"
+            message_text = bot.strings.admins_chaos_disorder.format(
+                chat_id=chat_identifier,
+                message_id=message.reply_to_message.message_id
+            )
+            bot.send_message(
+                settings.BOARD_GROUP_ID,
+                message_text,
+                parse_mode=constants.DEFAULT_PARSE_MODE
+            )
+            # after we send the message to board, we try to delete the message which warned us
+            # but before that, let's send that user a useful tip
+            try:
+                bot.send_message(
+                    message.from_user.id,
+                    bot.strings.admins_alerted_tip_for_user,
+                    parse_mode=constants.DEFAULT_PARSE_MODE
+                )
+            except telebot.apihelper.ApiTelegramException:
+                # user blocked us
+                pass
+            # let's clean this mess
+            bot.delete_message(message.chat.id, message.message_id)
+        except telebot.apihelper.ApiTelegramException:
+            # maybe we are not a memeber of board group?
+            logging.error(traceback.format_exc())
+        except:
+            # fatal error
+            logging.error(traceback.format_exc())
+
     # first of all, we need to check for prohibited topics
     if should_check_for_prohibited_topics:
         detected_topics = bot.detect_prohibited_topic(text)
@@ -648,7 +695,8 @@ def text_handler(message):
                     try:
                         bot.send_message(
                             uid,
-                            bot.strings.code_please_provide_input.format(input_header=constants.DEFAULT_INPUT_HEADER),
+                            bot.strings.code_please_provide_input.format(
+                                input_header=constants.DEFAULT_INPUT_HEADER),
                             parse_mode=constants.DEFAULT_PARSE_MODE
                         )
                     except:
@@ -676,7 +724,8 @@ def text_handler(message):
                     if response.errors and message.chat.type != 'private':
                         # let's send a tip to user
                         bot.send_message(
-                            uid, bot.strings.code_result_errors_detected_tip, parse_mode=constants.DEFAULT_PARSE_MODE
+                            uid, bot.strings.code_result_errors_detected_tip,
+                            parse_mode=constants.DEFAULT_PARSE_MODE
                         )
                 # save the code
                 models.Code.create(
@@ -754,7 +803,8 @@ def callback_handler(call):
             option = models.QuizOption.get(quiz=quiz, pk=option_id)
             if not option:
                 # options seems to be deleted
-                bot.send_message(uid, bot.strings.test_quiz_option_not_found, parse_mode=constants.DEFAULT_PARSE_MODE)
+                bot.send_message(uid, bot.strings.test_quiz_option_not_found,
+                                 parse_mode=constants.DEFAULT_PARSE_MODE)
             else:
                 # we have option, finally we can check
                 if option.is_true:
@@ -985,7 +1035,8 @@ def edited_message_handler(message):
                                               text=formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)
                     except telebot.apihelper.ApiTelegramException:
                         # could not edit, let's try sending new message
-                        resp_msg = bot.reply_to(message, formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)
+                        resp_msg = bot.reply_to(message, formatted_response,
+                                                parse_mode=constants.DEFAULT_PARSE_MODE)
                         existing_code.response_message_id = resp_msg.message_id
                 else:
                     resp_msg = bot.reply_to(message, formatted_response, parse_mode=constants.DEFAULT_PARSE_MODE)

@@ -776,9 +776,9 @@ def text_handler(message):
                 bot.send_message(message.chat.id, bot.strings.test_should_start_for_certificate,
                                  reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
             else:
-                should_run = False
                 # user has certificate. we check if s/he still can run code
                 if not bot.can_run_code(message):
+                    should_run = False
                     # user has already used all chances, need to wait for another day
                     bot.send_message(uid, bot.strings.code_limit_exceeded)
         if should_run:

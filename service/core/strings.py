@@ -43,7 +43,7 @@ class Strings(object):
     new_member_already_agreed = "Qoidalarga allaqachon rozilik bildirgansiz"
 
     # test
-    start_test = "Kayfiyatlar qalay ;)\nXo'sh, hozir siz bor yo'g'i 10 dona test ishlaysiz, lekin shuning " \
+    start_test = "Kayfiyatlar qalay ;)\nXo'sh, hozir siz bor yo'g'i {count} dona test ishlaysiz, lekin shuning " \
                  "o'zi yetarli bo'ladi. Demak, testni boshlashdan avval tanishib olsak. Ism va familiyangizni" \
                  " Ism Familiya shaklida yozib jo'nating. Masalan:\n  Eshmatjon Toshmatov\n\nIltimos, ma'lumotni" \
                  " to'g'ri kiriting, ism va familiyangiz sertifikatingizga yoziladi."
@@ -90,6 +90,7 @@ class Strings(object):
                                       "guruhga jo'natasiz. \n<b>Bu orqali siz guruhdagi kunlik limitlaringizni saqlab" \
                                       " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
     code_limit_exceeded = "Bugungi kun uchun limitlaringiz tugab qoldi, ertaga yana kod yoa olasiz"
+    code_response_too_long = "Natija hajmi juda katta, ruxsat etilgan hajm - {limit} ta belgi"
 
     # prohibited topics
     prohibited_topic_detected = "{user_name} [<code>{user_id}</code>] taqiqlangan mavzudagi gaplari uchun {date} " \

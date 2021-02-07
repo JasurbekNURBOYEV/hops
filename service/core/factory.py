@@ -77,21 +77,20 @@ class HopsBot(telebot.TeleBot):
             # if list is empty, we make a defualt one which includes the developer id
             whitelist = [settings.DEV_ID]
         member = None
-        try:
-            member = self.get_chat_member(settings.MAIN_GROUP_ID, uid)
-        except telebot.apihelper.ApiTelegramException:
+        for chat in constants.ALLOWED_CHATS:
             try:
-                member = self.get_chat_member(settings.TEST_GROUP_ID, uid)
+                member = self.get_chat_member(chat, uid)
             except telebot.apihelper.ApiTelegramException:
                 pass
-        finally:
-            # we might get member, but status might be 'left'
             if member and member.status != constants.USER_STATUS_LEFT:
-                return True
-            elif uid in whitelist:
-                # whitelist is a whitelist, we don't lock whitelisted users
-                return True
-            return False
+                break
+        # we might get member, but status might be 'left'
+        if member and member.status != constants.USER_STATUS_LEFT:
+            return True
+        elif uid in whitelist:
+            # whitelist is a whitelist, we don't lock whitelisted users
+            return True
+        return False
 
     def notify_about_membership(self, message) -> None:
         try:
@@ -213,9 +212,10 @@ class HopsBot(telebot.TeleBot):
                 detected_topics.append((topic, detected_targets))
         return detected_topics
 
-    def restrict_with_warning(self, message, detected_topics, user):
+    def restrict_with_warning(self, message, detected_topics, user, reason: str = None):
         """
         To restrict users when prohibited topic is detected
+        :param reason: custom reason by admin
         :param user: User object
         :param message: message
         :param detected_topics: list of detected topics
@@ -241,7 +241,7 @@ class HopsBot(telebot.TeleBot):
                         )
                         for topic, words in detected_topics
                     ]
-                ),
+                ) if not reason else reason,
                 user_name=message.from_user.first_name,
                 user_id=message.from_user.id,
                 date=(until_date.replace(tzinfo=pytz.UTC)).strftime("%Y-%m-%d %H:%M")
@@ -280,9 +280,10 @@ class HopsBot(telebot.TeleBot):
         :return:
         """
         certificate = models.Certificate.filter(user=user).last()
-        for name, percentage, limit in constants.TEST_CLASSES_BY_RESULT:
-            if certificate.percentage / 100 >= percentage:
-                return limit
+        if certificate:
+            for name, percentage, limit in constants.TEST_CLASSES_BY_RESULT:
+                if certificate.percentage / 100 >= percentage:
+                    return limit
         return 0
 
     def get_remaining_limit(self, user: models.User) -> int:
@@ -390,7 +391,8 @@ def command_handler(message):
     elif command.startswith(constants.COMMAND_TEST) and message.chat.type == 'private':
         # register the step & start
         bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
-        bot.send_message(uid, text=bot.strings.start_test)
+        quizzes_count = models.Quiz.all().count()
+        bot.send_message(uid, text=bot.strings.start_test.format(count=quizzes_count))
 
 
 # new chat members handler
@@ -687,8 +689,9 @@ def text_handler(message):
     if message.reply_to_message and text.startswith(constants.ADMIN_CMD_HEADER) and bot.is_commander(cid, uid):
         cmd = message.text.replace(constants.ADMIN_CMD_HEADER, '', 1)
         try:
-            if cmd.startswith(constants.ADMIN_CMD_RO):
+            if cmd.startswith(constants.ADMIN_CMD_UNRO):
                 # work on "Read-Only" stuff
+                # to unrestrict the user
                 restriction = models.Restriction.filter(
                     restriction_message_id=message.reply_to_message.message_id).last()
                 if restriction:
@@ -713,25 +716,34 @@ def text_handler(message):
                         # we send a useful tip to user
                         bot.send_message(uid, bot.strings.restriction_cant_lift_time_too_little,
                                          parse_mode=constants.DEFAULT_PARSE_MODE)
+            elif cmd.startswith(constants.ADMIN_CMD_RO):
+                # to restrict user
+                reason = cmd.replace(constants.ADMIN_CMD_RO, '', 1)
+                target_user, new = models.User.objects.get_or_create(uid=message.reply_to_message.from_user.id)
+                bot.restrict_with_warning(message.reply_to_message, detected_topics=[], user=target_user, reason=reason)
             elif cmd.startswith(constants.ADMIN_CMD_CHECK):
                 # we check user info and send it
-                target_user = models.User.get(uid=message.reply_to_message.from_user.id)
+                target_user, new = models.User.objects.get_or_create(uid=message.reply_to_message.from_user.id)
                 if target_user:
-                    certificate = models.Certificate.filter(user=target_user).last()
-                    last_restriction = models.Restriction.filter(user=target_user).last()
-                    last_restriction_time = (0, 0)
-                    if last_restriction:
-                        delta_object = timedelta(seconds=last_restriction.seconds)
-                        last_restriction_time = (delta_object.days, delta_object.seconds // 3600)
-                    remaining_daily_limit = bot.get_remaining_limit(target_user)
-                    detail_message = bot.strings.admin_check_user_details_template.format(
-                        certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%" if certificate else "-",
-                        last_restriction=f"{last_restriction_time[0]} kun, {last_restriction_time[1]} soat",
-                        remaining_daily_limit=remaining_daily_limit
-                    )
-                    bot.delete_message(cid, message.message_id)
-                    bot.send_message(uid, detail_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    try:
+                        certificate = models.Certificate.filter(user=target_user).last()
+                        last_restriction = models.Restriction.filter(user=target_user).last()
+                        last_restriction_time = (0, 0)
+                        if last_restriction:
+                            delta_object = timedelta(seconds=last_restriction.seconds)
+                            last_restriction_time = (delta_object.days, delta_object.seconds // 3600)
+                        remaining_daily_limit = bot.get_remaining_limit(target_user)
+                        detail_message = bot.strings.admin_check_user_details_template.format(
+                            certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%" if certificate else "-",
+                            last_restriction=f"{last_restriction_time[0]} kun, {last_restriction_time[1]} soat",
+                            remaining_daily_limit=remaining_daily_limit
+                        )
+                        bot.send_message(uid, detail_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    except:
+                        logging.error(traceback.format_exc())
+                bot.delete_message(cid, message.message_id)
         except:
+            bot.send_message(uid, traceback.format_exc())
             logging.error(traceback.format_exc())
 
     # first of all, we need to check for prohibited topics
@@ -747,81 +759,86 @@ def text_handler(message):
     if is_code:
         # we have a runnable code
         # first we check if user has certificate & limit didn't exceed
-        last_certificate = models.Certificate.filter(user=user).last()
-        if not last_certificate:
-            # user has no certificate, let's offer him/her a test
-            markup = types.InlineKeyboardMarkup()
-            markup.add(
-                types.InlineKeyboardButton(
-                    text=bot.strings.test_start_inline_button_text,
-                    callback_data=constants.CALLBACK_DATA_START_TEST_TEMPLATE.format(uid=uid)
+        # if this is private chat, we don't set limitations & ask for certificate
+        should_run = True
+        if message.chat.type != 'private':
+            last_certificate = models.Certificate.filter(user=user).last()
+            if not last_certificate:
+                should_run = False
+                # user has no certificate, let's offer him/her a test
+                markup = types.InlineKeyboardMarkup()
+                markup.add(
+                    types.InlineKeyboardButton(
+                        text=bot.strings.test_start_inline_button_text,
+                        callback_data=constants.CALLBACK_DATA_START_TEST_TEMPLATE.format(uid=uid)
+                    )
                 )
-            )
-            bot.send_message(message.chat.id, bot.strings.test_should_start_for_certificate,
-                             reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
-        else:
-            # user has certificate. we check if s/he still can run code
-            if not bot.can_run_code(message):
-                # user has already used all chances, need to wait for another day
-                bot.send_message(uid, bot.strings.code_limit_exceeded)
+                bot.send_message(message.chat.id, bot.strings.test_should_start_for_certificate,
+                                 reply_markup=markup, parse_mode=constants.DEFAULT_PARSE_MODE)
             else:
-                # run it and show response
-                response_message = None
-                result = None
-                errors = None
-                requires_input = interpreter.advanced_input_detection(text)
-                if requires_input:
-                    # if code requires input, we do not run it
-                    # when user replies to it with input data, then we run and show results
-                    # but if bot just stays silent, it might seem weird
-                    # so we notify user in private about this
-                    try:
-                        bot.send_message(
-                            uid,
-                            bot.strings.code_please_provide_input.format(
-                                input_header=constants.DEFAULT_INPUT_HEADER),
-                            parse_mode=constants.DEFAULT_PARSE_MODE
-                        )
-                    except:
-                        # it seems that user blocked us
-                        pass
-                else:
-                    # since code doesn't require input, we run it immediately
-                    response = interpreter.run(code_language, text)
-                    errors = response.errors
-                    result = response.result
-                    if should_check_for_prohibited_topics and result:
-                        # code response might include prohibited topics
-                        detected_topics = bot.detect_prohibited_topic(result)
-                        if detected_topics:
-                            # warn & restrict
-                            bot.send_message(message.chat.id, bot.strings.prohibited_topic_in_code_response)
-                            bot.restrict_with_warning(message, detected_topics, user)
-                            return
-                    formatted_output = interpreter.format_response(response)
-                    response_message = bot.reply_to(
-                        message,
-                        formatted_output,
+                should_run = False
+                # user has certificate. we check if s/he still can run code
+                if not bot.can_run_code(message):
+                    # user has already used all chances, need to wait for another day
+                    bot.send_message(uid, bot.strings.code_limit_exceeded)
+        if should_run:
+            # run it and show response
+            response_message = None
+            result = None
+            errors = None
+            requires_input = interpreter.advanced_input_detection(text)
+            if requires_input:
+                # if code requires input, we do not run it
+                # when user replies to it with input data, then we run and show results
+                # but if bot just stays silent, it might seem weird
+                # so we notify user in private about this
+                try:
+                    bot.send_message(
+                        uid,
+                        bot.strings.code_please_provide_input.format(
+                            input_header=constants.DEFAULT_INPUT_HEADER),
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
-                    if response.errors and message.chat.type != 'private':
-                        # let's send a tip to user
-                        bot.send_message(
-                            uid, bot.strings.code_result_errors_detected_tip,
-                            parse_mode=constants.DEFAULT_PARSE_MODE
-                        )
-                # save the code
-                models.Code.create(
-                    chat_id=message.chat.id,
-                    user=user,
-                    language_code=code_language,
-                    string=text,
-                    requires_input=requires_input,
-                    message_id=message.message_id,
-                    result=result,
-                    errors=errors,
-                    response_message_id=response_message.message_id if response_message else None
+                except:
+                    # it seems that user blocked us
+                    pass
+            else:
+                # since code doesn't require input, we run it immediately
+                response = interpreter.run(code_language, text)
+                errors = response.errors
+                result = response.result
+                if should_check_for_prohibited_topics and result:
+                    # code response might include prohibited topics
+                    detected_topics = bot.detect_prohibited_topic(result)
+                    if detected_topics:
+                        # warn & restrict
+                        bot.send_message(message.chat.id, bot.strings.prohibited_topic_in_code_response)
+                        bot.restrict_with_warning(message, detected_topics, user)
+                        return
+                formatted_output = interpreter.format_response(response)
+                response_message = bot.reply_to(
+                    message,
+                    formatted_output,
+                    parse_mode=constants.DEFAULT_PARSE_MODE
                 )
+                if response.errors and message.chat.type != 'private':
+                    # let's send a tip to user
+                    bot.send_message(
+                        uid, bot.strings.code_result_errors_detected_tip,
+                        parse_mode=constants.DEFAULT_PARSE_MODE
+                    )
+            # save the code
+            models.Code.create(
+                chat_id=message.chat.id,
+                user=user,
+                language_code=code_language,
+                string=text,
+                requires_input=requires_input,
+                message_id=message.message_id,
+                result=result,
+                errors=errors,
+                response_message_id=response_message.message_id if response_message else None
+            )
     elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
         # if this is a reply, this might be reply to a code
         # which means, it can be input data for that code

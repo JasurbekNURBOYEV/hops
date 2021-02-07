@@ -86,14 +86,16 @@ DEFAULT_CERT_LIMIT = 3
 DEFAULT_TEMP_MEDIA_FOLDER = 'temp'
 DEFUALT_RESTRICTION_SECONDS = 3600
 DEFAULT_BAN_LIMIT_SECONDS = 720 * 3600  # it is 720 hours in total, any user exceeding this limit will be banned
+DEFAULT_CODE_RESPONSE_LENGTH_LIMIT = 3000
 
 # allowed groups
 ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID, settings.BOARD_GROUP_ID]
 
 # admins
 ADMIN_ALERT_KEYWORD = '@admins'
-ADMIN_CMD_HEADER = '!'
+ADMIN_CMD_HEADER = 'sudo '
 ADMIN_CMD_RO = 'ro'
+ADMIN_CMD_UNRO = 'unro'
 ADMIN_CMD_CHECK = 'check'
 
 # tips

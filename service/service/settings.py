@@ -77,7 +77,7 @@ MAPPING_VOLUME_PATH = '/var/hops'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': f'{MAPPING_VOLUME_PATH}/db.sqlite3',
+        'NAME': f'{MAPPING_VOLUME_PATH}/db.sqlite3' if PRODUCTION_MODE else BASE_DIR / 'db.sqlite3',
     }
 }
 

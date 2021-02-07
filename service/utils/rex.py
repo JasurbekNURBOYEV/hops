@@ -7,6 +7,7 @@ import json
 import re
 import ast
 from service.core.strings import Strings
+from service.core import constants
 
 strings = Strings()
 
@@ -132,4 +133,6 @@ class Interpreter(object):
         if response.errors:
             # there was error(s)
             return strings.code_result_error_template.format(errors=strings.clean_html(response.errors))
+        elif len(response.result) > constants.DEFAULT_CODE_RESPONSE_LENGTH_LIMIT:
+            return strings.code_response_too_long.format(limit=constants.DEFAULT_CODE_RESPONSE_LENGTH_LIMIT)
         return strings.code_result_template.format(result=strings.clean_html(response.result))

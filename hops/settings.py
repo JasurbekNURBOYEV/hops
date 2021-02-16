@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'service.core',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +49,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'service.service.urls'
+ROOT_URLCONF = 'hops.urls'
 
 TEMPLATES = [
     {
@@ -67,17 +67,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'service.service.wsgi.application'
+WSGI_APPLICATION = 'hops.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-MAPPING_VOLUME_PATH = '/var/hops'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': f'{MAPPING_VOLUME_PATH}/db.sqlite3' if PRODUCTION_MODE else BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -137,8 +135,10 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = f'{MAPPING_VOLUME_PATH}/static/'
+STATIC_ROOT = BASE_DIR / 'static'
 CONTROL_PAGE_URL = os.environ.get('CONTROL_PAGE_URL')
+
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # HOPS-SPECIFIC CONFIGS
 BOT_TOKEN = os.environ.get('BOT_TOKEN')

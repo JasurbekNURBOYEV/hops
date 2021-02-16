@@ -2,7 +2,9 @@
 
 # built-in
 # local
-from service.core import constants
+from django.conf import settings
+
+from core import constants
 
 # django-specific
 from django.db import models
@@ -131,7 +133,7 @@ class Certificate(BaseLayer):
     score = models.PositiveSmallIntegerField()
     percentage = models.DecimalField(max_digits=5, decimal_places=2)
     class_name = models.CharField(max_length=7)
-    image = models.ImageField(upload_to="images/certificates", null=True)
+    image = models.ImageField(upload_to='certificates', null=True)
 
     @classmethod
     def create(cls, user, score, percentage, class_name, image=None):

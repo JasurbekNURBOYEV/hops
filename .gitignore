@@ -1,5 +1,8 @@
 **/__pycache__/**
 *.env
 **/migrations/**
-.idea/
+.idea
 *.sqlite3
+media
+static
+.DS_Store

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from service.core import models
+from core import models
 
 
 class QuizOptionInline(admin.StackedInline):

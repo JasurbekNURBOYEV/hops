@@ -4,13 +4,9 @@ services:
   core:
     build: .
     ports:
-      - '1254:1254'
-    command: daphne -b 0.0.0.0 -p 1254 service.service.asgi:application
+      - '1243:1243'
+    command: daphne -b 0.0.0.0 -p 1243 hops.asgi:application
     env_file:
       - .env
     volumes:
-      - hops_vol:/var/hops
-volumes:
-  hops_vol:
-    external: true
-
+      - .:/hops

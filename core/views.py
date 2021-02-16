@@ -6,7 +6,9 @@ We'll be implementing the base control units here.
 # --- START: IMPORTS
 # built-in
 # local
-from service.core.factory import bot
+import traceback
+
+from core.factory import bot
 
 # django-specific
 from django.http import JsonResponse
@@ -27,7 +29,11 @@ def handle_webhook_requests(request):
     if request.headers.get('content-type') == 'application/json':
         json_string = request.body.decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
+        print("processing 42")
+        try:
+            bot.process_new_updates([update])
+        except:
+            print(traceback.format_exc())
         return JsonResponse(dict(ok=True))
     else:
         return JsonResponse(dict(ok=False), status=400)

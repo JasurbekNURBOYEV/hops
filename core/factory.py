@@ -13,12 +13,12 @@ import re
 from io import BytesIO
 
 # local
-from service.core import models
-from service.utils.decorators import lock_method_for_strangers
-from service.core import constants
-from service.core.strings import Strings
-from service.core.certificate import create_certificate
-from service.utils.rex import Interpreter
+from core import models
+from utils.decorators import lock_method_for_strangers
+from core import constants
+from core.strings import Strings
+from core.certificate import create_certificate
+from utils.rex import Interpreter
 
 # django-specific
 from django.core.files import File
@@ -347,52 +347,55 @@ bot = HopsBot(token=settings.BOT_TOKEN)
 @bot.message_handler(commands=[constants.COMMAND_START, constants.COMMAND_CANCEL, constants.COMMAND_TEST])
 @lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
 def command_handler(message):
-    text = message.text
-    command = text[1:]
-    uid = message.from_user.id
-    user, _ = models.User.objects.get_or_create(uid=uid)
+    try:
+        text = message.text
+        command = text[1:]
+        uid = message.from_user.id
+        user, _ = models.User.objects.get_or_create(uid=uid)
 
-    # start command
-    if command.startswith(constants.COMMAND_START) and message.chat.type == 'private':
-        # check if it is a data-binded command
-        data = command.replace(f"{constants.COMMAND_START} ", '', 1)
-        if not data:
-            # it is a pure command without additional data
-            # we need to do tha basic start procedure
-            bot.welcome(message)
-        else:
-            # we have data which needs processing
-            if data == constants.CMD_DATA_START_TEST:
-                # register the step & start
-                bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
-                bot.send_message(uid, text=bot.strings.start_test)
-                # hopefully we're done here
-            elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
-                chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]
-                # new user is requesting for rules
-                if user.agreement_time is not None:
-                    # already agreed
-                    bot.send_message(
-                        uid, bot.strings.new_member_already_agreed, parse_mode=constants.DEFAULT_PARSE_MODE)
-                else:
-                    bot.send_message(
-                        uid,
-                        bot.strings.new_member_rules.format(key=user.magic_word),
-                        parse_mode=constants.DEFAULT_PARSE_MODE
-                    )
-                    bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
-                    # done
-    elif command.startswith(constants.COMMAND_CANCEL) and message.chat.type == 'private':
-        # this is where we handle cancellations
-        # in any case, we just cancel whatever we were doing
-        # and just head back to initial state
-        bot.set_next_step(user=user, step=constants.STEP_INITIAL_POINT)
-        bot.send_message(uid, bot.strings.cancelled)
-    elif command.startswith(constants.COMMAND_TEST) and message.chat.type == 'private':
-        # register the step & start
-        bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
-        quizzes_count = models.Quiz.all().count()
-        bot.send_message(uid, text=bot.strings.start_test.format(count=quizzes_count))
+        # start command
+        if command.startswith(constants.COMMAND_START) and message.chat.type == 'private':
+            # check if it is a data-binded command
+            data = command.replace(f"{constants.COMMAND_START} ", '', 1)
+            if not data:
+                # it is a pure command without additional data
+                # we need to do tha basic start procedure
+                bot.welcome(message)
+            else:
+                # we have data which needs processing
+                if data == constants.CMD_DATA_START_TEST:
+                    # register the step & start
+                    bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
+                    bot.send_message(uid, text=bot.strings.start_test)
+                    # hopefully we're done here
+                elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
+                    chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]
+                    # new user is requesting for rules
+                    if user.agreement_time is not None:
+                        # already agreed
+                        bot.send_message(
+                            uid, bot.strings.new_member_already_agreed, parse_mode=constants.DEFAULT_PARSE_MODE)
+                    else:
+                        bot.send_message(
+                            uid,
+                            bot.strings.new_member_rules.format(key=user.magic_word),
+                            parse_mode=constants.DEFAULT_PARSE_MODE
+                        )
+                        bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
+                        # done
+        elif command.startswith(constants.COMMAND_CANCEL) and message.chat.type == 'private':
+            # this is where we handle cancellations
+            # in any case, we just cancel whatever we were doing
+            # and just head back to initial state
+            bot.set_next_step(user=user, step=constants.STEP_INITIAL_POINT)
+            bot.send_message(uid, bot.strings.cancelled)
+        elif command.startswith(constants.COMMAND_TEST) and message.chat.type == 'private':
+            # register the step & start
+            bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
+            quizzes_count = models.Quiz.all().count()
+            bot.send_message(uid, text=bot.strings.start_test.format(count=quizzes_count))
+    except:
+        print(traceback.format_exc())
 
 
 # new chat members handler

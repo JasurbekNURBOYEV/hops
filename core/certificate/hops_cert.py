@@ -6,8 +6,8 @@ Design & python implementation are both suggested & done by author
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 
-font_bold = ImageFont.truetype('service/core/certificate/fonts/Montserrat-Bold.ttf', 56)
-font_medium = ImageFont.truetype('service/core/certificate/fonts/Montserrat-Medium.otf', 40)
+font_bold = ImageFont.truetype('core/certificate/fonts/Montserrat-Bold.ttf', 56)
+font_medium = ImageFont.truetype('core/certificate/fonts/Montserrat-Medium.otf', 40)
 
 color_name = (83, 158, 254)
 color_white = (255, 255, 255)
@@ -22,7 +22,7 @@ def create_certificate(first_name, last_name, degree, result, date):
     date: STRING
     """
 
-    img = Image.open(f"service/core/certificate/templates/{degree}.png")
+    img = Image.open(f"core/certificate/templates/{degree}.png")
     draw = ImageDraw.Draw(img)
     w, h = img.size
 

@@ -6,8 +6,8 @@ import requests
 import json
 import re
 import ast
-from service.core.strings import Strings
-from service.core import constants
+from core.strings import Strings
+from core import constants
 
 strings = Strings()
 

@@ -139,6 +139,7 @@ STATIC_ROOT = BASE_DIR / 'static'
 CONTROL_PAGE_URL = os.environ.get('CONTROL_PAGE_URL')
 
 MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = 'media'
 
 # HOPS-SPECIFIC CONFIGS
 BOT_TOKEN = os.environ.get('BOT_TOKEN')

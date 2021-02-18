@@ -29,7 +29,7 @@ def handle_webhook_requests(request):
     if request.headers.get('content-type') == 'application/json':
         json_string = request.body.decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
-        print("processing 42")
+        print("processing...")
         try:
             bot.process_new_updates([update])
         except:

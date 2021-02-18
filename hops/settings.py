@@ -166,6 +166,7 @@ PROHIBITED_TOPICS = [
             "botma", "botanika", "botqo", "botgan", "botkan", "botib", "botir", "botak", "botmon", "razrabot",
             "obrabot", "robot", "isbot", "rabot", "umrbot", "botstrap", "boot", "bootcamp", "botcamp"
         ],
-        "hint": "Bu mavzuda gaplash uchun quyidagi guruhlarga kirishingiz mumkin: @botlarhaqida, @it_uz_offtopic"
+        "hint": "Bu mavzuda gaplash uchun quyidagi guruhlarga kirishingiz mumkin: @botlarhaqida, @telebot_uz, "
+                "@it_uz_offtopic"
     }
 ]

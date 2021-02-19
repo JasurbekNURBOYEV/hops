@@ -13,8 +13,9 @@ class Strings(object):
     you_are_not_a_member = "Botdan foydalanish uchun asosiy guruh a'zosi bo'lishingiz kerak."
 
     # new member
-    new_member = "Salom {name}! Python guruhiga xush kelibsiz!\n\nSiz hozir guruhda faqat o'qiy olasiz. Yozish " \
-                 "imkoniyatiga ega bo'lish uchun quyidagi tugmani bosing va qoidalarga roziligingizni bildiring"
+    new_member = "Salom <a href=\"tg://user?id={uid}\">{name}</a>! Python guruhiga xush kelibsiz!\n\nSiz hozir " \
+                 "guruhda faqat o'qiy olasiz. Yozish imkoniyatiga ega bo'lish uchun quyidagi tugmani bosing va " \
+                 "qoidalarga roziligingizni bildiring"
     new_member_button_text = "Bu yerga bosing"
     new_member_old_comrade_back = 'Eski qadrdonimiz <a href="tg://user?id={uid}">{name}</a> safimizga qaytdi'
     new_member_already_restricted = '⚠️ <a href="tg://user?id={uid}">{name}</a> avvaldan ushbu guruhda mavjud bo\'lgan ' \

@@ -456,7 +456,7 @@ def new_chat_member_handler(message):
                     # restricted, now send a 'welcome' message
                     welcome_message = bot.send_message(
                         message.chat.id,
-                        bot.strings.new_member.format(name=guest_name),
+                        bot.strings.new_member.format(name=guest_name, uid=guest.id),
                         reply_markup=markup,
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )

@@ -1148,12 +1148,12 @@ def edited_message_handler(message):
                         bot.restrict_with_warning(message, detected_topics, user)
                         # we end process here by returning
                         return
-                        # checking whether it's required to edit it if we had an old response
-                if existing_code.response_message_id and (existing_code.result != response.result) and (
-                        existing_code.errors != response.errors):
-                    same_result = False
-                else:
+                # checking whether it's required to edit it if we had an old response
+                if existing_code.response_message_id and existing_code.result == response.result and \
+                        existing_code.errors == response.errors:
                     same_result = True
+                else:
+                    same_result = False
                 formatted_response = interpreter.format_response(response)
                 existing_code.errors = response.errors
                 existing_code.result = response.result

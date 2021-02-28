@@ -1,0 +1,130 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container py-5">
+
+        <div class="row justify-content-md-center">
+            <div class="col-6">
+                <h3>Oxirgi oy uchun ishga tushirilgan kodlar statistikasi</h3>
+                <h5>Jami {{stats.overall_codes}} ta kod ishga tushirilgan</h5>
+            </div>
+        </div>
+
+        <!-- Doughnut: Groups-->
+        <div class="row justify-content-md-center py-5">
+            <div class="col-8">
+                <div class="row justify-content-md-center">
+                    <div class="col-6">
+                        <canvas id="groups"></canvas>
+                        <script>
+                            var ctx = document.getElementById('groups').getContext('2d');
+                            var myDoughnutChart = new Chart(ctx, {
+                                type: 'doughnut',
+                                data: {
+                                    datasets: [{
+                                        data: [{{ stats.groups.success }}, {{stats.groups.errors}}],
+                                        backgroundColor: [
+                                            'rgb(0, 183, 108)',
+                                            'rgba(255, 99, 132, 1)',
+                                        ],
+                                    }],
+
+                                    // These labels appear in the legend and in the tooltips when hovering different arcs
+                                    labels: [
+                                        'To\'g\'ri',
+                                        'Xato',
+                                    ]
+                                },
+                            });
+                        </script>
+                        <h6 class="text-center py-2">Guruhda</h6>
+                    </div>
+
+                    <div class="col-6">
+                        <canvas id="private"></canvas>
+                        <script>
+                            var ctx = document.getElementById('private').getContext('2d');
+                            var myDoughnutChart = new Chart(ctx, {
+                                type: 'doughnut',
+                                data: {
+                                    datasets: [{
+                                        data: [{{stats.private.success}}, {{stats.private.errorss}}],
+                                        backgroundColor: [
+                                            'rgb(0, 183, 108)',
+                                            'rgba(255, 99, 132, 1)',
+                                        ],
+                                    }],
+
+                                    // These labels appear in the legend and in the tooltips when hovering different arcs
+                                    labels: [
+                                        'To\'g\'ri',
+                                        'Xato'
+                                    ]
+                                },
+                            });
+                        </script>
+                        <h6 class="text-center py-2">Shaxsiy chatda</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Line: Errors in Groups-->
+        <div class="row justify-content-md-center">
+            <div class="col-6">
+                <canvas id="errors_in_groups"></canvas>
+                <script>
+                    var ctx = document.getElementById('errors_in_groups').getContext('2d');
+                    var myLineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                            datasets: [
+                                {
+                                    data: {{ stats.groups.errors_by_time }},
+                                    label: "Oxirgi oy uchun guruhdagi xatoliklar (% hisobida)",
+                                    borderColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                    ],
+                                    backgroundColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                    ]
+                                },
+                                {
+                                    data: {{ stats.private.errors_by_time }},
+                                    label: "Oxirgi oy uchun shaxsiy chatdagi xatoliklar (% hisobida)",
+                                    borderColor: [
+                                        'rgba(250, 180, 100, 1)',
+                                    ],
+                                    backgroundColor: [
+                                        'rgba(250, 180, 100, 1)',
+                                    ]
+                                }
+                            ],
+
+                            // These labels appear in the legend and in the tooltips when hovering different arcs
+                            labels: {{stats.time_labels}}
+                        },
+                    options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                });
+                </script>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

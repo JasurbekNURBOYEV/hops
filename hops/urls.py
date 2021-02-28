@@ -17,8 +17,10 @@ from django.conf import settings
 from django.urls import path, include
 from core import views as core_views
 from django.contrib import admin
+from core.views import show_stats
 
 urlpatterns = [
     path(settings.CONTROL_PAGE_URL, admin.site.urls),
     path(settings.BOT_TOKEN, core_views.handle_webhook_requests),
+    path('stats/', show_stats)
 ]

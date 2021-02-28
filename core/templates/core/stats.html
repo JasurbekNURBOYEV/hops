@@ -14,7 +14,7 @@
         <div class="row justify-content-md-center">
             <div class="col-6">
                 <h3>Oxirgi oy uchun ishga tushirilgan kodlar statistikasi</h3>
-                <h5>Jami {{stats.overall_codes}} ta kod ishga tushirilgan</h5>
+                <h6>Jami {{stats.overall_codes}} ta kod ishga tushirilgan</h6>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                                 },
                             });
                         </script>
-                        <h6 class="text-center py-2">Guruhda</h6>
+                        <h6 class="text-center py-2">Guruhda ({{stats.groups.codes}})</h6>
                     </div>
 
                     <div class="col-6">
@@ -56,7 +56,7 @@
                                 type: 'doughnut',
                                 data: {
                                     datasets: [{
-                                        data: [{{stats.private.success}}, {{stats.private.errorss}}],
+                                        data: [{{stats.private.success}}, {{stats.private.errors}}],
                                         backgroundColor: [
                                             'rgb(0, 183, 108)',
                                             'rgba(255, 99, 132, 1)',
@@ -71,7 +71,7 @@
                                 },
                             });
                         </script>
-                        <h6 class="text-center py-2">Shaxsiy chatda</h6>
+                        <h6 class="text-center py-2">Shaxsiy chatda ({{stats.private.codes}})</h6>
                     </div>
                 </div>
             </div>
@@ -95,9 +95,37 @@
                                     ],
                                     backgroundColor: [
                                         'rgba(255, 99, 132, 1)',
-                                    ]
+                                    ],
                                 },
-                                {
+                            ],
+                            // These labels appear in the legend and in the tooltips when hovering different arcs
+                            labels: {{stats.time_labels}}
+                        },
+                    options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true,
+                                        suggestedMax: 100
+                                    }
+                                }]
+                            }
+                        }
+                });
+                </script>
+            </div>
+        </div>
+
+        <!-- Line: Errors in Private-->
+        <div class="row justify-content-md-center py-2">
+            <div class="col-6">
+                <canvas id="errors_in_private"></canvas>
+                <script>
+                    var ctx = document.getElementById('errors_in_private').getContext('2d');
+                    var myLineChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                            datasets: [{
                                     data: {{ stats.private.errors_by_time }},
                                     label: "Oxirgi oy uchun shaxsiy chatdagi xatoliklar (% hisobida)",
                                     borderColor: [
@@ -105,7 +133,7 @@
                                     ],
                                     backgroundColor: [
                                         'rgba(250, 180, 100, 1)',
-                                    ]
+                                    ],
                                 }
                             ],
 
@@ -116,7 +144,8 @@
                             scales: {
                                 yAxes: [{
                                     ticks: {
-                                        beginAtZero: true
+                                        beginAtZero: true,
+                                        suggestedMax: 100
                                     }
                                 }]
                             }

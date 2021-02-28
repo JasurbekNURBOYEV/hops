@@ -7,6 +7,7 @@ We'll be implementing the base control units here.
 # built-in
 # local
 import json
+import random
 import traceback
 from datetime import timedelta
 
@@ -47,7 +48,6 @@ def handle_webhook_requests(request):
 
 
 def show_stats(request, *args, **kwargs):
-    stats = {}
     a_month_before_date = timezone.now() - timedelta(days=30)
     today = timezone.now()
     codes_for_last_month = models.Code.filter(created_time__gte=a_month_before_date, created_time__lte=today)
@@ -81,6 +81,7 @@ def show_stats(request, *args, **kwargs):
             user__uid=F('chat_id'), errors__isnull=True
         ).count() or 1) for i in code_by_days
     ]
+
     groups = {
         "codes": group_codes.count(),
         "errors": group_error_codes.count(),
@@ -91,7 +92,7 @@ def show_stats(request, *args, **kwargs):
     private = {
         "codes": private_codes.count(),
         "errors": private_error_codes.count(),
-        "errors_by_time": groups_errors_percentage_by_days,
+        "errors_by_time": private_errors_percentage_by_days,
         "success": private_codes.count() - private_error_codes.count()
     }
     time_labels = [int(i[0].strftime("%d")) for i in code_by_days]
@@ -102,5 +103,4 @@ def show_stats(request, *args, **kwargs):
         "private": private,
         "time_labels": time_labels
     }
-    print(json.dumps(stats, indent=3))
     return render(request, "core/stats.html", context={"stats": stats})

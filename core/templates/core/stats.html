@@ -7,10 +7,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+    <script>
+        var red = 'rgb(233, 30, 98)';
+        var green = 'rgb(46, 125, 50)';
+        var orange = 'rgb(239, 83, 80)';
+        var darkBlue = 'rgb(26, 34, 43)';
+        var white = 'rgb(255, 255, 255, 1)';
+        var bgcolor = white;
+        var grey = 'rgb(201, 201, 201)';
+        var darkGrey = 'rgb(100, 100, 100)';
+        var gridColor = grey;
+        var pink = 'rgb(158, 62, 207)';
+    </script>
+    <style>
+        body {
+          padding: 25px;
+          background-color: white;
+          color: black;
+          font-size: 25px;
+        }
+
+        .dark-mode {
+          background-color: #1a222b;
+          color: #d1d1d1;
+        }
+    </style>
 </head>
 <body>
     <div class="container py-5" style="max-width: 800px">
-
+        <p onclick="toggleDayNight()" id="dayNight"></p>
         <div class="row justify-content-md-center">
             <div class="col">
                 <h3>Oxirgi oy uchun ishga tushirilgan kodlar statistikasi</h3>
@@ -23,25 +48,32 @@
             <div class="col-6">
                 <canvas id="groups"></canvas>
                 <script>
-                    var ctx = document.getElementById('groups').getContext('2d');
-                    var myDoughnutChart = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            datasets: [{
-                                data: [{{ stats.groups.success }}, {{stats.groups.errors}}],
-                                backgroundColor: [
-                                    'rgb(0, 183, 108)',
-                                    'rgba(255, 99, 132, 1)',
-                                ],
-                            }],
+                    function showDoughnotGroups(){
+                        var ctx = document.getElementById('groups').getContext('2d');
+                        var myDoughnutChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                datasets: [{
+                                    data: [{{ stats.groups.success }}, {{stats.groups.errors}}],
+                                    backgroundColor: [
+                                        green,
+                                        red,
+                                    ],
+                                    borderColor: [
+                                        bgcolor,
+                                        bgcolor
+                                    ],
+                                    borderWidth: 1
+                                }],
 
-                            // These labels appear in the legend and in the tooltips when hovering different arcs
-                            labels: [
-                                'To\'g\'ri',
-                                'Xato',
-                            ]
-                        },
-                    });
+                                // These labels appear in the legend and in the tooltips when hovering different arcs
+                                labels: [
+                                    'To\'g\'ri',
+                                    'Xato',
+                                ]
+                            },
+                        });
+                    }
                 </script>
                 <h6 class="text-center py-2">Guruhda ({{stats.groups.codes}})</h6>
             </div>
@@ -49,25 +81,32 @@
             <div class="col-6">
                 <canvas id="private"></canvas>
                 <script>
-                    var ctx = document.getElementById('private').getContext('2d');
-                    var myDoughnutChart = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            datasets: [{
-                                data: [{{stats.private.success}}, {{stats.private.errors}}],
-                                backgroundColor: [
-                                    'rgb(0, 183, 108)',
-                                    'rgba(255, 99, 132, 1)',
-                                ],
-                            }],
+                    function showDoughnutPrivate() {
+                        var ctx = document.getElementById('private').getContext('2d');
+                        var myDoughnutChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                datasets: [{
+                                    data: [{{stats.private.success}}, {{stats.private.errors}}],
+                                    backgroundColor: [
+                                        green,
+                                        red,
+                                    ],
+                                    borderColor: [
+                                        bgcolor,
+                                        bgcolor
+                                    ],
+                                    borderWidth: 1
+                                }],
 
-                            // These labels appear in the legend and in the tooltips when hovering different arcs
-                            labels: [
-                                'To\'g\'ri',
-                                'Xato'
-                            ]
-                        },
-                    });
+                                // These labels appear in the legend and in the tooltips when hovering different arcs
+                                labels: [
+                                    'To\'g\'ri',
+                                    'Xato'
+                                ]
+                            },
+                        });
+                    }
                 </script>
                 <h6 class="text-center py-2">Shaxsiy chatda ({{stats.private.codes}})</h6>
             </div>
@@ -78,36 +117,49 @@
             <div class="col">
                 <canvas id="errors_in_groups"></canvas>
                 <script>
-                    var ctx = document.getElementById('errors_in_groups').getContext('2d');
-                    var myLineChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                            datasets: [
-                                {
-                                    data: {{ stats.groups.errors_by_time }},
-                                    label: "Oxirgi oy uchun guruhdagi xatoliklar (% hisobida)",
-                                    borderColor: [
-                                        'rgba(255, 99, 132, 1)',
+                    function showLineChartGroups(){
+                        var ctx = document.getElementById('errors_in_groups').getContext('2d');
+                        var myLineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                    datasets: [
+                                        {
+                                            data: {{ stats.groups.errors_by_time }},
+                                            label: "Oxirgi oy uchun guruhdagi xatoliklar (% hisobida)",
+                                            borderColor: [
+                                                red,
+                                            ],
+                                            backgroundColor: [
+                                                red,
+                                            ],
+                                            borderWidth: 1
+                                        },
                                     ],
-                                    backgroundColor: [
-                                        'rgba(255, 99, 132, 1)',
-                                    ],
+                                    // These labels appear in the legend and in the tooltips when hovering different arcs
+                                    labels: {{stats.time_labels}}
                                 },
-                            ],
-                            // These labels appear in the legend and in the tooltips when hovering different arcs
-                            labels: {{stats.time_labels}}
-                        },
-                    options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true,
-                                        suggestedMax: 100
-                                    }
-                                }]
-                            }
-                        }
-                });
+                            options: {
+                                    scales: {
+                                        yAxes: [{
+                                            ticks: {
+                                                beginAtZero: true,
+                                                suggestedMax: 100
+                                            },
+                                            gridLines: {
+                                                display: true,
+                                                color: gridColor
+                                            }
+                                        }],
+                                        xAxes: [{
+                                            gridLines: {
+                                                display: true,
+                                                color: gridColor
+                                            }
+                                        }]
+                                    },
+                                }
+                        });
+                    }
                 </script>
             </div>
         </div>
@@ -117,39 +169,86 @@
             <div class="col">
                 <canvas id="errors_in_private"></canvas>
                 <script>
-                    var ctx = document.getElementById('errors_in_private').getContext('2d');
-                    var myLineChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                            datasets: [{
-                                    data: {{ stats.private.errors_by_time }},
-                                    label: "Oxirgi oy uchun shaxsiy chatdagi xatoliklar (% hisobida)",
-                                    borderColor: [
-                                        'rgba(250, 180, 100, 1)',
+                    function showLineChartPrivate(){
+                        var ctx = document.getElementById('errors_in_private').getContext('2d');
+                        var myLineChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                    datasets: [{
+                                            data: {{ stats.private.errors_by_time }},
+                                            label: "Oxirgi oy uchun shaxsiy chatdagi xatoliklar (% hisobida)",
+                                            borderColor: [
+                                                orange,
+                                            ],
+                                            backgroundColor: [
+                                                orange,
+                                            ],
+                                            borderWidth: 1
+                                        }
                                     ],
-                                    backgroundColor: [
-                                        'rgba(250, 180, 100, 1)',
-                                    ],
-                                }
-                            ],
 
-                            // These labels appear in the legend and in the tooltips when hovering different arcs
-                            labels: {{stats.time_labels}}
-                        },
-                    options: {
-                            scales: {
-                                yAxes: [{
-                                    ticks: {
-                                        beginAtZero: true,
-                                        suggestedMax: 100
-                                    }
-                                }]
+                                    // These labels appear in the legend and in the tooltips when hovering different arcs
+                                    labels: {{stats.time_labels}}
+                                },
+                            options: {
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true,
+                                            suggestedMax: 100
+                                        },
+                                        gridLines: {
+                                            display: true,
+                                            color: gridColor
+                                        }
+                                    }],
+                                    xAxes: [{
+                                        gridLines: {
+                                            display: true,
+                                            color: gridColor
+                                        }
+                                    }],
+                                }
                             }
-                        }
-                });
+                        });
+                    }
                 </script>
             </div>
         </div>
     </div>
+    <script>
+        function showCharts(){
+            showDoughnutPrivate();
+            showDoughnotGroups();
+            showLineChartPrivate();
+            showLineChartGroups();
+        }
+
+        function toggleDayNight() {
+          var element = document.body;
+          element.classList.toggle("dark-mode");
+          if (bgcolor == darkBlue) {
+              bgcolor = white;
+          } else {
+              bgcolor = darkBlue;
+          }
+
+          if (gridColor == grey) {
+              gridColor = darkGrey;
+          } else {
+              gridColor = grey;
+          }
+          if (document.getElementById("dayNight").innerText == "🌒") {
+              document.getElementById("dayNight").innerText = "☀️";
+          } else {
+              document.getElementById("dayNight").innerText = "🌒";
+          }
+          showCharts();
+        }
+
+        // show all charts
+        showCharts();
+        document.getElementById("dayNight").innerText = "🌒";
+    </script>
 </body>
 </html>

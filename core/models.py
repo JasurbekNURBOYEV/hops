@@ -2,8 +2,6 @@
 
 # built-in
 # local
-from django.conf import settings
-
 from core import constants
 
 # django-specific

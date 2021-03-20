@@ -6,19 +6,15 @@ We'll be implementing the base control units here.
 # --- START: IMPORTS
 # built-in
 # local
-import json
-import random
 import traceback
 from datetime import timedelta
-
-from django.db.models import F, Q
-from django.shortcuts import render
-from django.utils import timezone
-
 from core import models
 from core.factory import bot
 
 # django-specific
+from django.db.models import F, Q
+from django.shortcuts import render
+from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -37,7 +33,6 @@ def handle_webhook_requests(request):
     if request.headers.get('content-type') == 'application/json':
         json_string = request.body.decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
-        print("processing...")
         try:
             bot.process_new_updates([update])
         except:
@@ -49,32 +44,32 @@ def handle_webhook_requests(request):
 
 def show_stats(request, *args, **kwargs):
     a_month_before_date = timezone.now() - timedelta(days=30)
-    today = timezone.now() + timedelta(days=1)
-    codes_for_last_month = models.Code.filter(created_time__gte=a_month_before_date, created_time__lte=today)
+    codes_for_last_month = models.Code.filter(created_time__gte=a_month_before_date)
     code_by_days = []
     for i in range(31):
         day = a_month_before_date + timedelta(days=i)
-        codes_for_the_day = codes_for_last_month.filter(created_time__lte=day)
+        previous_day = day - timedelta(days=1)
+        codes_for_the_day = codes_for_last_month.filter(created_time__lte=day, created_time__gte=previous_day)
         # calculate error percentage
         error_codes = codes_for_the_day.filter(errors__isnull=False)
         error_percentage = (error_codes.count() / codes_for_the_day.count() * 100) if codes_for_the_day.count() else 0
         code_by_days.append((day, codes_for_the_day, error_percentage, 100 - error_percentage))
 
-    group_codes = models.Code.filter(~Q(user__uid=F('chat_id')))
-    private_codes = models.Code.filter(user__uid=F('chat_id'))
+    group_codes = codes_for_last_month.filter(~Q(user__uid=F('chat_id')))
+    private_codes = codes_for_last_month.filter(user__uid=F('chat_id'))
     group_error_codes = group_codes.filter(errors__isnull=False)
     private_error_codes = private_codes.filter(errors__isnull=False)
-    groups_errors_percentage_by_days = [
-        i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=False).count() /
-        (i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=True).count() or 1) * 100
-        for i in code_by_days
-    ]
-
-    private_errors_percentage_by_days = [
-        i[1].filter(user__uid=F('chat_id'), errors__isnull=False).count() /
-        (i[1].filter(user__uid=F('chat_id'), errors__isnull=True).count() or 1) * 100
-        for i in code_by_days
-    ]
+    groups_errors_percentage_by_days = []
+    private_errors_percentage_by_days = []
+    for i in code_by_days:
+        # groups stats
+        group_corrects = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=False).count()
+        group_errors = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=True).count()
+        groups_errors_percentage_by_days.append(group_corrects / (group_errors or 1) * 100)
+        # private stats
+        private_corrects = i[1].filter(user__uid=F('chat_id'), errors__isnull=False).count()
+        private_errors = i[1].filter(user__uid=F('chat_id'), errors__isnull=True).count()
+        private_errors_percentage_by_days.append(private_corrects / (private_errors or 1) * 100)
 
     groups = {
         "codes": group_codes.count(),

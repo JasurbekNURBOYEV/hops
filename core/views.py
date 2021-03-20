@@ -43,17 +43,14 @@ def handle_webhook_requests(request):
 
 
 def show_stats(request, *args, **kwargs):
-    a_month_before_date = timezone.now() - timedelta(days=30)
+    a_month_before_date = (timezone.now() - timedelta(days=30)).date()
     codes_for_last_month = models.Code.filter(created_time__gte=a_month_before_date)
     code_by_days = []
     for i in range(31):
         day = a_month_before_date + timedelta(days=i)
-        previous_day = day - timedelta(days=1)
-        codes_for_the_day = codes_for_last_month.filter(created_time__lte=day, created_time__gte=previous_day)
-        # calculate error percentage
-        error_codes = codes_for_the_day.filter(errors__isnull=False)
-        error_percentage = (error_codes.count() / codes_for_the_day.count() * 100) if codes_for_the_day.count() else 0
-        code_by_days.append((day, codes_for_the_day, error_percentage, 100 - error_percentage))
+        next_day = day + timedelta(days=1)
+        codes_for_the_day = codes_for_last_month.filter(created_time__lte=next_day, created_time__gte=day)
+        code_by_days.append((day, codes_for_the_day))
 
     group_codes = codes_for_last_month.filter(~Q(user__uid=F('chat_id')))
     private_codes = codes_for_last_month.filter(user__uid=F('chat_id'))
@@ -61,15 +58,15 @@ def show_stats(request, *args, **kwargs):
     private_error_codes = private_codes.filter(errors__isnull=False)
     groups_errors_percentage_by_days = []
     private_errors_percentage_by_days = []
-    for i in code_by_days:
+    for day, codes in code_by_days:
         # groups stats
-        group_errors = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=False).count()
-        group_total_codes = i[1].filter(~Q(user__uid=F('chat_id'))).count()
-        groups_errors_percentage_by_days.append(group_errors / (group_total_codes or 1) * 100)
+        group_total_codes = codes.filter(~Q(user__uid=F('chat_id')))
+        group_errors = group_total_codes.filter(errors__isnull=False).count()
+        groups_errors_percentage_by_days.append(round(group_errors / (group_total_codes.count() or 1) * 100, 2))
         # private stats
-        private_totoal_codes = i[1].filter(user__uid=F('chat_id')).count()
-        private_errors = i[1].filter(user__uid=F('chat_id'), errors__isnull=False).count()
-        private_errors_percentage_by_days.append(private_errors / (private_totoal_codes or 1) * 100)
+        private_totoal_codes = codes.filter(user__uid=F('chat_id'))
+        private_errors = private_totoal_codes.filter(errors__isnull=False).count()
+        private_errors_percentage_by_days.append(round(private_errors / (private_totoal_codes.count() or 1) * 100, 2))
 
     groups = {
         "codes": group_codes.count(),
@@ -84,7 +81,7 @@ def show_stats(request, *args, **kwargs):
         "errors_by_time": private_errors_percentage_by_days,
         "success": private_codes.count() - private_error_codes.count()
     }
-    time_labels = [int(i[0].strftime("%d")) for i in code_by_days]
+    time_labels = [int(day.strftime("%d")) for day, codes in code_by_days]
 
     stats = {
         "overall_codes": codes_for_last_month.count(),

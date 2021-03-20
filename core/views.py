@@ -63,13 +63,13 @@ def show_stats(request, *args, **kwargs):
     private_errors_percentage_by_days = []
     for i in code_by_days:
         # groups stats
-        group_corrects = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=False).count()
-        group_errors = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=True).count()
-        groups_errors_percentage_by_days.append(group_corrects / (group_errors or 1) * 100)
+        group_errors = i[1].filter(~Q(user__uid=F('chat_id')), errors__isnull=False).count()
+        group_total_codes = i[1].filter(~Q(user__uid=F('chat_id'))).count()
+        groups_errors_percentage_by_days.append(group_errors / (group_total_codes or 1) * 100)
         # private stats
-        private_corrects = i[1].filter(user__uid=F('chat_id'), errors__isnull=False).count()
-        private_errors = i[1].filter(user__uid=F('chat_id'), errors__isnull=True).count()
-        private_errors_percentage_by_days.append(private_corrects / (private_errors or 1) * 100)
+        private_totoal_codes = i[1].filter(user__uid=F('chat_id')).count()
+        private_errors = i[1].filter(user__uid=F('chat_id'), errors__isnull=False).count()
+        private_errors_percentage_by_days.append(private_errors / (private_totoal_codes or 1) * 100)
 
     groups = {
         "codes": group_codes.count(),

@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from bubbler.runner import BubbleRunner
+from ocean.runner import BubbleRunner
 
 
 @csrf_exempt

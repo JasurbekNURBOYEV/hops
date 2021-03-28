@@ -10,3 +10,21 @@ services:
       - .env
     volumes:
       - .:/hops
+    networks:
+      - internal
+      - global
+  bubbler:
+    build: ./bubbler
+    ports:
+    - '80:80'
+    hostname: bubbler
+    command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
+    networks:
+      - internal
+    restart: on-failure
+networks:
+  global:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true

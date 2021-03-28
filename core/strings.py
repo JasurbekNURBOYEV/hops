@@ -92,6 +92,7 @@ class Strings(object):
                                       " qolasiz, chunki o'zimga kod yozganingizda limitlaringiz kamaymaydi.</b>"
     code_limit_exceeded = "Bugungi kun uchun limitlaringiz tugab qoldi, ertaga yana kod yoa olasiz"
     code_response_too_long = "Natija hajmi juda katta, ruxsat etilgan hajm - {limit} ta belgi"
+    code_server_fatal_error = "Nimadir sindi..."
 
     # prohibited topics
     prohibited_topic_detected = "{user_name} [<code>{user_id}</code>] taqiqlangan mavzudagi gaplari uchun {date} " \

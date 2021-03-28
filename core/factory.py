@@ -18,7 +18,7 @@ from utils.decorators import lock_method_for_strangers
 from core import constants
 from core.strings import Strings
 from core.certificate import create_certificate
-from utils.rex import Interpreter
+from utils.bubbler_client import Interpreter
 
 # django-specific
 from django.core.files import File

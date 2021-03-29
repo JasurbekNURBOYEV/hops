@@ -23,6 +23,14 @@ services:
     command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
     networks:
       - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 50M
+        reservations:
+          cpus: '0.10'
+          memory: 20M
     restart: on-failure
 networks:
   global:

@@ -1,6 +1,8 @@
 # REX.py - code-running stuff is handled here
 # the code above just sends request to Rextester API
 # and works a little bit on the response, that's it
+import traceback
+
 import requests
 import json
 import re
@@ -124,6 +126,7 @@ class Interpreter(object):
             rex = Rex(errors, result, stats, success)
             return rex
         except:
+            print(traceback.format_exc())
             rex = Rex(errors=strings.code_server_fatal_error, result="", stats="", success=False)
             return rex
 

@@ -16,7 +16,7 @@ services:
   bubbler:
     build: ./bubbler
     env_file:
-      - .env
+      - bubbler/.env
     ports:
     - '80:80'
     hostname: bubbler

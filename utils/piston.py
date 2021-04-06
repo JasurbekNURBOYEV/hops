@@ -9,7 +9,6 @@ import re
 import ast
 from core.strings import Strings
 from core import constants
-import docker
 
 strings = Strings()
 
@@ -106,7 +105,7 @@ class Interpreter(object):
                 return True, language_code
         return False, -1
 
-    def run(self, lang: int, code: str, input_data: str = None) -> Rex:
+    def run(self, lang: int, code: str, input_data: str = "") -> Rex:
         """
         To run code using Rextester API
         :param lang: language string
@@ -115,21 +114,22 @@ class Interpreter(object):
         :return: instance of Rex class including serialized API response
         """
         try:
-            url = "http://bubbler"
-            payload = {"code": code, "input": input_data}
-            request = requests.post(url, data=payload)
-            result = request.text
-            json_obj = json.loads(result)
-            errors = json_obj['Errors']
-            result = json_obj['Result']
-            stats = json_obj['Stats']
-            success = True if not errors else False
+            url = "https://emkc.org/api/v1/piston/execute"
+            payload = {"language": "py3", "source": code, "stdin": input_data}
+            request = requests.post(url, json=payload)
+            json_obj = request.json()
+            errors = json_obj['stderr']
+            result = json_obj['output']
+            stats = ""
+            success = not errors
             rex = Rex(errors, result, stats, success)
             return rex
         except:
             print(traceback.format_exc())
-            rex = Rex(errors=strings.code_server_fatal_error, result="", stats="", success=False)
-            return rex
+            errors = strings.code_server_fatal_error
+            result = ""
+            stats = ""
+            return Rex(result=result, errors=errors, stats=stats)
 
     def format_response(self, response) -> str:
         """
@@ -142,6 +142,4 @@ class Interpreter(object):
             return strings.code_result_error_template.format(errors=strings.clean_html(response.errors))
         elif len(response.result) > constants.DEFAULT_CODE_RESPONSE_LENGTH_LIMIT:
             return strings.code_response_too_long.format(limit=constants.DEFAULT_CODE_RESPONSE_LENGTH_LIMIT)
-        elif not response.result and not response.errors:
-            return strings.code_no_results_no_errors
         return strings.code_result_template.format(result=strings.clean_html(response.result))

@@ -20,7 +20,7 @@ services:
     ports:
     - '80:80'
     hostname: bubbler
-    command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
+#    command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
     networks:
       - internal
     deploy:

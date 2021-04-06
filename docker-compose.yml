@@ -13,22 +13,22 @@ services:
     networks:
       - internal
       - global
-  bubbler:
-    build: ./bubbler
-    env_file:
-      - bubbler/.env
-    ports:
-    - '80:80'
-    hostname: bubbler
-#    command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
-    networks:
-      - internal
-    deploy:
-      resources:
-        limits:
-          cpus: '0.2'
-          memory: 100M
-    restart: on-failure
+#  bubbler:
+#    build: ./bubbler
+#    env_file:
+#      - bubbler/.env
+#    ports:
+#    - '80:80'
+#    hostname: bubbler
+##    command: daphne -b 0.0.0.0 -p 80 bubbler.asgi:application
+#    networks:
+#      - internal
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '0.2'
+#          memory: 100M
+#    restart: on-failure
 networks:
   global:
     driver: bridge

@@ -1,15 +1,10 @@
-# REX.py - code-running stuff is handled here
-# the code above just sends request to Rextester API
-# and works a little bit on the response, that's it
 import traceback
-
 import requests
 import json
 import re
 import ast
 from core.strings import Strings
 from core import constants
-import docker
 
 strings = Strings()
 

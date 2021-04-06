@@ -1,10 +1,5 @@
-# REX.py - code-running stuff is handled here
-# the code above just sends request to Rextester API
-# and works a little bit on the response, that's it
 import traceback
-
 import requests
-import json
 import re
 import ast
 from core.strings import Strings
@@ -129,7 +124,8 @@ class Interpreter(object):
             errors = strings.code_server_fatal_error
             result = ""
             stats = ""
-            return Rex(result=result, errors=errors, stats=stats)
+            success = not errors
+            return Rex(result=result, errors=errors, stats=stats, success=success)
 
     def format_response(self, response) -> str:
         """

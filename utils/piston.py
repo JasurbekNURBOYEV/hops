@@ -109,7 +109,7 @@ class Interpreter(object):
         :return: instance of Rex class including serialized API response
         """
         try:
-            url = "https://emkc.org/api/v1/piston/execute"
+            url = "https://emkc.org/api/v2/piston/execute"
             payload = {"language": "python3", "files": [code], "stdin": input_data, "version": "3"}
             request = requests.post(url, data=payload)
             json_obj = request.json()

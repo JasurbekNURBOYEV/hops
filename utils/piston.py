@@ -111,7 +111,7 @@ class Interpreter(object):
         try:
             url = "https://emkc.org/api/v1/piston/execute"
             payload = {"language": "python3", "files": [code], "stdin": input_data, "version": "3"}
-            request = requests.post(url, json=payload)
+            request = requests.post(url, data=payload)
             json_obj = request.json()
             response = json_obj.get('run')
             errors = response['stderr']

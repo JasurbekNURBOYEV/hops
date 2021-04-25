@@ -58,15 +58,26 @@ def show_stats(request, *args, **kwargs):
     private_error_codes = private_codes.filter(errors__isnull=False)
     groups_errors_percentage_by_days = []
     private_errors_percentage_by_days = []
+    group_error_counts = []
+    group_total_counts = []
+    private_error_counts = []
+    private_total_counts = []
     for day, codes in code_by_days:
         # groups stats
         group_total_codes = codes.filter(~Q(user__uid=F('chat_id')))
         group_errors = group_total_codes.filter(errors__isnull=False).count()
         groups_errors_percentage_by_days.append(round(group_errors / (group_total_codes.count() or 1) * 100, 2))
+
+        group_error_counts.append(group_errors)
+        group_total_counts.append(group_total_codes.count())
+
         # private stats
         private_totoal_codes = codes.filter(user__uid=F('chat_id'))
         private_errors = private_totoal_codes.filter(errors__isnull=False).count()
         private_errors_percentage_by_days.append(round(private_errors / (private_totoal_codes.count() or 1) * 100, 2))
+
+        private_error_counts.append(private_errors)
+        private_total_counts.append(private_totoal_codes.count())
 
     groups = {
         "codes": group_codes.count(),
@@ -87,6 +98,12 @@ def show_stats(request, *args, **kwargs):
         "overall_codes": codes_for_last_month.count(),
         "groups": groups,
         "private": private,
-        "time_labels": time_labels
+        "time_labels": time_labels,
+        "group_errors": group_error_counts,
+        "group_totals": group_total_counts,
+        "private_errors": private_error_counts,
+        "private_totals": private_total_counts
     }
+
+    # grouped bar chart
     return render(request, "core/stats.html", context={"stats": stats})

@@ -113,8 +113,9 @@ class Interpreter(object):
             payload = {"language": "python3", "files": [code], "stdin": input_data, "version": "3"}
             request = requests.post(url, json=payload)
             json_obj = request.json()
-            errors = json_obj['stderr']
-            result = json_obj['output']
+            response = json_obj.get('run')
+            errors = response['stderr']
+            result = response['output']
             stats = ""
             success = not errors
             rex = Rex(errors, result, stats, success)

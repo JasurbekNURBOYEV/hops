@@ -98,7 +98,7 @@ class Strings(object):
     # prohibited topics
     prohibited_topic_detected = "{user_name} [<code>{user_id}</code>] taqiqlangan mavzudagi gaplari uchun {date} " \
                                 "gacha guruhda yozishdan cheklab qo'yildi. \nQuyidagi taqiqlangan mavzular " \
-                                "aniqlandi:\n{topics}"
+                                "aniqlandi: {topics}"
     prohibited_topic_template = "<b>{topic_name}</b> mavzusi bo'yicha: {words}\n{hint}"
     prohibited_topic_in_code_response = "Kod natijasida taqiqlangan mavzu aniqlandi"
     restricted_until_time = '%Y-yil, {day}-{month}, soat %H:%M'

@@ -366,7 +366,7 @@ def command_handler(message):
                 if data == constants.CMD_DATA_START_TEST:
                     # register the step & start
                     bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
-                    bot.send_message(uid, text=bot.strings.start_test)
+                    bot.send_message(uid, text=bot.strings.start_test.format(count=models.Quiz.all().count()))
                     # hopefully we're done here
                 elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
                     chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]

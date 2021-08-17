@@ -908,12 +908,15 @@ def image_handler(message):
     dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
     img = Image.open(BytesIO(dl_file))
     # combine caption text and extracted text from image
-    text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
-    # check for prohibited topics
-    detected_topics = bot.detect_prohibited_topic(text)
-    if detected_topics:
-        # restrict & warn
-        bot.restrict_with_warning(message, detected_topics, user)
+    try:
+        text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
+        # check for prohibited topics
+        detected_topics = bot.detect_prohibited_topic(text)
+        if detected_topics:
+            # restrict & warn
+            bot.restrict_with_warning(message, detected_topics, user)
+    except:
+        logging.error(traceback.format_exc())
 
 
 # edited photo handler
@@ -929,12 +932,15 @@ def edited_image_handler(message):
     dl_file = bot.download_file(bot.get_file(photo.file_id).file_path)
     img = Image.open(BytesIO(dl_file))
     # combine caption text and extracted text from image
-    text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
-    # check for prohibited topics
-    detected_topics = bot.detect_prohibited_topic(text)
-    if detected_topics:
-        # restrict & warn
-        bot.restrict_with_warning(message, detected_topics, user)
+    try:
+        text = " ".join([text, pytesseract.image_to_string(img, timeout=3)])
+        # check for prohibited topics
+        detected_topics = bot.detect_prohibited_topic(text)
+        if detected_topics:
+            # restrict & warn
+            bot.restrict_with_warning(message, detected_topics, user)
+    except:
+        logging.error(traceback.format_exc())
 
 
 # handler for callback queries

@@ -3,6 +3,7 @@ This is a bot factory module which is roughly used to create full bot instance
 """
 # --- START: IMPORTS
 # built-in
+import json
 import random
 from datetime import datetime, timedelta
 from typing import List, Tuple
@@ -14,10 +15,10 @@ from io import BytesIO
 
 # local
 from core import models
-from utils.decorators import lock_method_for_strangers
 from core import constants
 from core.strings import Strings
 from core.certificate import create_certificate
+from utils.decorators import lock_method_for_strangers
 from utils.piston import Interpreter
 
 # django-specific
@@ -28,6 +29,7 @@ from django.db.models import Sum
 from django.db.models import Q
 
 # other/external
+from telebot.types import Message
 import telebot
 from telebot import types
 import pytesseract
@@ -65,6 +67,37 @@ class HopsBot(telebot.TeleBot):
             self._username = bot.get_me().username
         return self._username
 
+    def set_context(self, message: telebot.types.Message, _key: str, _value) -> None:
+        """
+        Set values to main context
+        :param message: Message instance
+        :param _key: key
+        :param _value: value
+        :return: None
+        """
+        request_id = self.generate_unique_id(message=message)
+        if hasattr(self, 'context'):
+            self.context[request_id] = {_key: _value}
+
+    @staticmethod
+    def generate_unique_id(json_string: str = None, message: Message = None):
+        """
+        We use this to generate unique ID from either json or Message instance of a single message object.
+        :param json_string: string of json
+        :param message: Message instance
+        :return: string representing a unique ID
+        """
+        template = '{date}-{chat_id}'
+        if json_string:
+            json_data = json.loads(json_string)
+            msg = json_data[list(json_data.keys())[1]]
+            return template.format(
+                date=msg["date"], chat_id=msg["chat"]["id"])
+        elif message:
+            return template.format(date=message.date, chat_id=message.chat.id)
+        else:
+            raise ValueError("No data to process. Provide at least one of these: json_string, message")
+
     def is_member(self, uid: int, whitelist: List[int]) -> bool:
         """
         To check a membership os a user
@@ -95,18 +128,11 @@ class HopsBot(telebot.TeleBot):
     def notify_about_membership(self, message) -> None:
         try:
             self.send_message(message.from_user.id, self.strings.you_are_not_a_member)
-        except:
+        except telebot.apihelper.ApiTelegramException:
             pass
-
-    def welcome(self, message) -> None:
-        """
-        Send a welcome message and store user (if new)
-        :param message: message object by telebot
-        :return: None
-        """
-        uid = message.from_user.id
-        models.User.objects.get_or_create(uid=uid)
-        self.send_message(uid, self.strings.welcome)
+        finally:
+            # if user is not a member, using the bot is considered violation
+            self.set_context(message, 'violation', True)
 
     def set_next_step(self, user: models.User, step: int, temp_data: str = None) -> None:
         """
@@ -183,7 +209,7 @@ class HopsBot(telebot.TeleBot):
             spoilers = topic.get('spoilers', [])
             clean_text = self.strings.clean_text(text, spoilers=spoilers)
             # let's analyze the text
-            # try to connect all letters of target words together (if ther are separated by spaces)
+            # try to connect all letters of target words together (if they are separated by spaces)
             # and collect all those suspicious words
             suspicious_words = set()
             for target_word in targets:
@@ -273,6 +299,9 @@ class HopsBot(telebot.TeleBot):
         except Exception as fe:
             logging.error(fe)
 
+        # set red flag to inform GI about violation
+        self.set_context(message, 'violation', True)
+
     def get_daily_limit(self, user: models.User) -> int:
         """
         Returns daily limit for a user to run code in group
@@ -356,46 +385,53 @@ def command_handler(message):
         # start command
         if command.startswith(constants.COMMAND_START) and message.chat.type == 'private':
             # check if it is a data-binded command
-            data = command.replace(f"{constants.COMMAND_START} ", '', 1)
-            if not data:
-                # it is a pure command without additional data
-                # we need to do tha basic start procedure
-                bot.welcome(message)
-            else:
-                # we have data which needs processing
-                if data == constants.CMD_DATA_START_TEST:
-                    # register the step & start
-                    bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
-                    bot.send_message(uid, text=bot.strings.start_test.format(count=models.Quiz.all().count()))
-                    # hopefully we're done here
-                elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
-                    chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]
-                    # new user is requesting for rules
-                    if user.agreement_time is not None:
-                        # already agreed
-                        bot.send_message(
-                            uid, bot.strings.new_member_already_agreed, parse_mode=constants.DEFAULT_PARSE_MODE)
-                    else:
-                        bot.send_message(
-                            uid,
-                            bot.strings.new_member_rules.format(key=user.magic_word),
-                            parse_mode=constants.DEFAULT_PARSE_MODE
-                        )
-                        bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
-                        # done
+            try:
+                data = command.replace(f"{constants.COMMAND_START} ", '', 1)
+                if not data or data == constants.COMMAND_START:
+                    # it is a pure command without additional data
+                    # we need to do tha basic start procedure
+                    bot.reply_to(message, bot.strings.welcome)
+                else:
+                    # we have data which needs processing
+                    if data == constants.CMD_DATA_START_TEST:
+                        # register the step & start
+                        bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
+                        bot.send_message(uid, text=bot.strings.start_test.format(count=models.Quiz.all().count()))
+                        # hopefully we're done here
+                    elif data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[0] == constants.CMD_DATA_RULES:
+                        chat_id = data.split(constants.CALLBACK_DATA_HEADER_SEPARATOR)[1]
+                        # new user is requesting for rules
+                        if user.agreement_time is not None:
+                            # already agreed
+                            bot.send_message(
+                                uid, bot.strings.new_member_already_agreed, parse_mode=constants.DEFAULT_PARSE_MODE)
+                        else:
+                            bot.send_message(
+                                uid,
+                                bot.strings.new_member_rules.format(key=user.magic_word),
+                                parse_mode=constants.DEFAULT_PARSE_MODE
+                            )
+                            bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
+                            # done
+            except:
+                logging.error(traceback.format_exc())
+
+        # cancel command
         elif command.startswith(constants.COMMAND_CANCEL) and message.chat.type == 'private':
             # this is where we handle cancellations
             # in any case, we just cancel whatever we were doing
             # and just head back to initial state
             bot.set_next_step(user=user, step=constants.STEP_INITIAL_POINT)
             bot.send_message(uid, bot.strings.cancelled)
+
+        # test command - to start quiz
         elif command.startswith(constants.COMMAND_TEST) and message.chat.type == 'private':
             # register the step & start
             bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
             quizzes_count = models.Quiz.all().count()
             bot.send_message(uid, text=bot.strings.start_test.format(count=quizzes_count))
     except:
-        print(traceback.format_exc())
+        logging.error(f'Fatal error in command handler: {traceback.format_exc()}')
 
 
 # new chat members handler

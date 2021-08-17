@@ -13,6 +13,7 @@ from django.conf import settings
 COMMAND_START = 'start'
 COMMAND_TEST = 'test'
 COMMAND_CANCEL = 'cancel'
+COMMAND_TAGS = 'tags'
 
 # command data prefixes
 CMD_DATA_START_TEST = 'test'
@@ -100,3 +101,6 @@ ADMIN_CMD_CHECK = 'check'
 
 # tips
 TIPS_HEADER = '!'
+
+# tags
+TAG_PREFIX = '#'

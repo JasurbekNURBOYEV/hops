@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: #1a222b;
+        }
+
+        .card {
+            background: #2d3a4a;
+            margin-top: 50px;
+        }
+
+        p {
+            color: #eaeaea;
+        }
+
+        h5 {
+            color: #96c7e3;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container-md" style="max-width: 840px; padding-top: 50px;">
+        <div class="row">
+            <form class="d-flex" action="/search">
+                <input class="form-control me-2" type="search" placeholder="Savolni yozing..." aria-label="search" name="q">
+                <button class="btn btn-outline-success" type="submit">Qidirish</button>
+              </form>
+        </div>
+        <br>
+        <div class="row">
+            <p class="text-muted">Eng oxirgi savollar</p>
+        </div>
+
+        <div class="row">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <p class="fa-font">Lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet ...</p>
+                    </div>
+
+                    <div class="row">
+                        <p class="small text-muted"><span class="active"><i>- First Last</i></span> <b>|</b> <span>2021-08-12</span></p>
+                        <button type="button" class="btn btn-primary position-relative">
+                            Muhokama
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    12+
+                                <span class="visually-hidden"></span>
+                            </span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

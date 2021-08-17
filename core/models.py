@@ -1,6 +1,8 @@
 # --- START: IMPORTS
 
 # built-in
+import uuid
+
 # local
 from core import constants
 
@@ -79,15 +81,16 @@ class User(BaseLayer):
     To store users
     """
     uid = models.IntegerField(unique=True)
-    full_name = models.TextField(null=True)
+    uuid = models.UUIDField(null=True, blank=True, default=None)
+    full_name = models.TextField(null=True, blank=True)
     step = models.PositiveSmallIntegerField(default=0)
-    temp_data = models.TextField(null=True)
-    magic_word = models.CharField(max_length=63)
-    welcome_message_id = models.IntegerField(null=True)
-    agreement_time = models.DateTimeField(null=True)
+    temp_data = models.TextField(null=True, blank=True)
+    magic_word = models.CharField(max_length=63, null=True, blank=True)
+    welcome_message_id = models.IntegerField(null=True, blank=True)
+    agreement_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"User: {self.uid}"
+        return f"{self.full_name or ''} {self.uid}".lstrip()
 
     class Meta:
         db_table = 'users'

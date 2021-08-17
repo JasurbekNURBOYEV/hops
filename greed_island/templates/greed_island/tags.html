@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tag dashboard</title>
+    <meta name="description" content="Hopsda taglarga a'zo bo'lish, a'zolikni bekor qilish uchun sahifa">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js" integrity="sha512-d9xgZrVZpmmQlfonhQUvTR7lMPtO7NkZMkA0ABN3PHCbKA5nqylQ/yWlFAyY6hYgdF1Qh6nYiuADWwKB4C2WSw==" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: #1a222b;
+            color: #96c7e3;
+        }
+
+        p {
+            color: #eaeaea;
+        }
+
+        h5 {
+            color: #96c7e3;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container-md" style="max-width: 840px; padding-top: 50px;">
+        {% if not uuid %}
+            <center><h3>¯\_(ツ)_/¯</h3></center>
+        {% else %}
+        <div class="row">
+            <h5>#tag <span class="text-muted">(tagga a'zolar soni)</span></h5>
+            <hr>
+            {% if not tags %}
+                <h3>¯\_(ツ)_/¯</h3>
+            {% endif %}
+            <form action="/tags/{{ uuid }}/">
+                <div class="row row-cols-1 row-cols-md-4 g-1">
+
+                    {% for tag in tags %}
+                        <div class="col">
+                            <input type="checkbox" name="tag" value="{{ tag.pk }}" {{ tag.checked }}>
+                            #{{ tag.name }}
+                            {% if tag.subscribers_count %}
+                                <span class="text-muted">({{ tag.subscribers_count }})</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+            </div>
+            <hr>
+            <button class="btn btn-primary position-relative" type="submit">Saqlash</button>
+        </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

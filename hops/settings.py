@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'core',
+    'greed_island',
 ]
 
 MIDDLEWARE = [
@@ -108,7 +109,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
     },
     'loggers': {
         'django': {
@@ -149,6 +150,9 @@ TEST_GROUP_ID = int(os.environ.get('TEST_GROUP_ID'))
 BOARD_GROUP_ID = int(os.environ.get('BOARD_GROUP_ID'))
 TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
 DEV_ID = int(os.environ.get('DEV_ID'))
+
+# add / remove / edit profibited topics
+# NOTE: provide empty list if you want to disable prohibited topics: PROHIBITED_TOPICS = []
 PROHIBITED_TOPICS = [
     {
         "name": "botlar",
@@ -167,7 +171,10 @@ PROHIBITED_TOPICS = [
             "botma", "botanika", "botqo", "botgan", "botkan", "botib", "botir", "botak", "botmon", "razrabot",
             "obrabot", "robot", "isbot", "rabot", "umrbot", "botstrap", "boot", "bootcamp", "botcamp"
         ],
-        "hint": "Bu mavzuda gaplash uchun quyidagi guruhlarga kirishingiz mumkin: @botlarhaqida, @telebot_uz, "
-                "@it_uz_offtopic"
+        "hint": "Bu mavzuda gaplashish uchun quyidagi guruhlarga kirishingiz mumkin: @botlarhaqida, @telebot_uz, "
+                "@python_uz_offtopic"
     }
 ]
+
+DOMAIN_URL = os.environ.get('DOMAIN_URL')
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

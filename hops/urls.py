@@ -14,13 +14,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.urls import path, include
-from core import views as core_views
+from django.conf.urls.static import static
 from django.contrib import admin
-from core.views import show_stats
+from django.urls import path
+
+from core import views as core_views
+from core.views import show_stats, home, tags
 
 urlpatterns = [
     path(settings.CONTROL_PAGE_URL, admin.site.urls),
     path(settings.BOT_TOKEN, core_views.handle_webhook_requests),
-    path('stats/', show_stats)
+    path('stats/', show_stats),
+    path('tags/<uuid>/', tags),
+    path('', home),
 ]
+
+if not settings.PRODUCTION_MODE:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

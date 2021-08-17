@@ -1,3 +1,4 @@
+import logging
 import traceback
 import requests
 import json
@@ -122,7 +123,7 @@ class Interpreter(object):
             rex = Rex(errors, result, stats, success)
             return rex
         except:
-            print(traceback.format_exc())
+            logging.error(traceback.format_exc())
             rex = Rex(errors=strings.code_server_fatal_error, result="", stats="", success=False)
             return rex
 

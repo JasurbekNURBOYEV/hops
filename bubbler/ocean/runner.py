@@ -2,6 +2,7 @@ import pwd
 import subprocess
 import traceback
 import os
+import logging
 
 
 class BubbleRunner(object):
@@ -51,7 +52,7 @@ class BubbleRunner(object):
         except PermissionError:
             self.result, self.errors = "", "Ruxsat etilmagan buyruq ishlatildi"
         except:
-            print(traceback.format_exc())
+            logging.error(traceback.format_exc())
             self.errors = "Kutilmagan xatolik"
         self.result = self.result or ""
         self.errors = self.errors or ""

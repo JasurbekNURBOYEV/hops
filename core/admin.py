@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from core import models
 
 
@@ -13,6 +14,10 @@ class QuizAdmin(admin.ModelAdmin):
     inlines = [QuizOptionInline]
 
 
-admin.site.register(models.User)
+@admin.register(models.User)
+class UserAdmin(admin.ModelAdmin):
+    search_fields = ["uid", "full_name"]
+
+
 admin.site.register(models.Certificate)
 admin.site.register(models.Tip)

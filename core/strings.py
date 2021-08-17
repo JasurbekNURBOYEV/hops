@@ -115,16 +115,52 @@ class Strings(object):
                                         "<b>Oxirgi cheklov:</b> {last_restriction}\n" \
                                         "<b>Kunlik limit:</b> {remaining_daily_limit}"
 
+    # greed island strings, shortly gi
+
+    gi_tag_changed_by_master = "♻️ Siz qo'shgan tag {old} o'zgardi, endi u {new}. " \
+                               "Keyingi safar uni {new} holatida ishlatishingizni so'raymiz."
+    gi_tag_removed_by_master = "❌ Siz qo'shgan tag {tag} o'chirib qo'yildi. Iltimos, uni boshqa " \
+                               "ishlatmang. O'chirilishiga sabab quyidagilardan biri bo'lishi mumkin: " \
+                               "\n - bunaqa mazmundagi tag allaqachon mavjud edi" \
+                               "\n - bu tag guruh mavzusiga mos emas" \
+                               "\n - tagda xatolik bor" \
+                               "\n - tagda boshqa muammo bor"
+
+    @property
+    def gi_tag_format(self) -> str:
+        return "#{tag}"
+
+    gi_new_question_received = "Siz ulangan taglar ({tags}) bo'yicha yangi savol keldi.\n\n" \
+                               "<i>{question}</i>\n\n" \
+                               "📩 <a href=\"{link_to_message}\">Xabarga o'tish</a>  " \
+                               "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>"
+    gi_answer_accepted_by_questioner = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> savol bergan odam " \
+                                       "tomonidan to'g'ri, deb qabul qilindi"
+
+    @property
+    def gi_tags_list(self) -> str:
+        return f"Format: {self.gi_tag_format.format(tag='tag')} (a'zolar soni).\n\n" \
+               "{tags_list}\n\n" \
+               "⚠️ Yuqorida eng ko'pida 10 dona tag ko'rsatildi. Hamma taglarni ko'rish va taglarga a'zo bo'lish, " \
+               "a'zolikni bekor qilish uchun <b>'Tag dashboard'</b>ga o'ting."
+
+    gi_tag_dashboard_button_text = "Tag dashboard"
+    gi_accept_answer_commands = ["✅"]
+    gi_question_tag = "savol"
+    gi_answer_tag = "javob"
+
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"
+
     keys = ["olma", "yo'lbars", "ruchka", "wifi", "kitob", "toshbaqa", "kaktus", "hamkorlik", "hayot", "kema",
             "televizor", "xanjar", "oyna", "bulut", "stul", "bayroq", "diplom", "tanga", "sirtlon", "tulpor", "tarmoq",
             "python", "monitor", "grafika", "choynak", "apelsin", "diplomat", "kelajak", "daraxt", "bolta", "tuxum",
             "xazina", "onajonim", "xalq", "bolalik", "jannat", "farishta", "tabassum"
             ]
 
-    def clean_html(self, text: str) -> str:
+    @staticmethod
+    def clean_html(text: str) -> str:
         """
         To replace html chars with their equivalences
         :param text: input data
@@ -137,15 +173,19 @@ class Strings(object):
         amp = ("&", "&amp;")
         return text.replace(amp[0], amp[1]).replace(gt[0], gt[1]).replace(lt[0], lt[1])
 
-    def resize(self, text, max_size: int) -> str:
+    @staticmethod
+    def resize(text, max_size: int, ellipsis_at_end: bool = False) -> str:
         if not text:
             return text
         # resize the string and return it
         if len(text) > max_size:
-            return f"{text[:max_size // 2]}...{text[-max_size // 2:]}"
+            if ellipsis_at_end:
+                return f"{text[:max_size].strip()}..."
+            return f"{text[:max_size // 2].strip()}...{text[-max_size // 2:].strip()}"
         return text
 
-    def month_to_str(self, month):
+    @staticmethod
+    def month_to_str(month):
         months = {
             1: 'yanvar',
             2: 'fevral',
@@ -162,7 +202,8 @@ class Strings(object):
         }
         return months.get(month, '¯\_(ツ)_/¯')
 
-    def clean_text(self, text: str, spoilers: List[Tuple[str]]) -> str:
+    @staticmethod
+    def clean_text(text: str, spoilers: List[Tuple[str]]) -> str:
         """
         To clean the text from redundant chars...
         :param text: incoming message text

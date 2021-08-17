@@ -13,11 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.conf import settings
 from django.urls import path
-print("PATH", settings.BASE_DIR)
 from ocean.views import bubble
-
 
 urlpatterns = [
     path('', bubble),

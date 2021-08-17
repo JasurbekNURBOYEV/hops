@@ -153,12 +153,9 @@ def text_handler(message):
                 question=question, text=clean_answer, author=user, message_id=message.message_id,
                 chat_id=message.chat.id,
                 reply_to_message_id=message.reply_to_message.message_id if message.reply_to_message else None)
-            bot.send_message(chat_id=user.uid,
-                             text=urify.get_message_thread_link(
-                                 chat_id=question.chat_id, message_id=question.message_id))
 
     if text in strings.gi_accept_answer_commands:
-        # so, someone replied to message with a text which is a command to approve answer.
+        # so, someone replied to message with a text which is a command to approve answer.
         # we need to check if this was a reply to an answer
         try:
             answer = Answer.get(

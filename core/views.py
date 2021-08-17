@@ -66,25 +66,31 @@ def handle_webhook_requests(request):
 
         json_string = request.body.decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
-        request_id = bot.generate_unique_id(json_string=json_string)
-
-        # set-up initial configs/data
-        setup(bot, request_id)
-
         try:
-            process_update(bot, update)
-            # for now, i'm using this hard coded flow of processing.
-            # maybe i'll think of a controller interface later... maybe not.
+            request_id = bot.generate_unique_id(json_string=json_string)
+            # set-up initial configs/data
+            setup(bot, request_id)
 
-            # anyway, we've just run first instance, and we got our results (in context).
-            # we continue according to user behaviour: we do not run next bot in case of violation
-            if not bot.context[request_id]['violation']:
-                # process update with greed island bot instance
-                process_update(gi_bot, update)
-        finally:
-            # time to clean
-            # remove redundant data from context. we've already used it and we don't need it anymore
-            bot.context.pop(request_id)
+            try:
+                process_update(bot, update)
+                # for now, i'm using this hard coded flow of processing.
+                # maybe i'll think of a controller interface later... maybe not.
+
+                # anyway, we've just run first instance, and we got our results (in context).
+                # we continue according to user behaviour: we do not run next bot in case of violation
+                if not bot.context[request_id]['violation']:
+                    # process update with greed island bot instance
+                    process_update(gi_bot, update)
+            finally:
+                # time to clean
+                # remove redundant data from context. we've already used it and we don't need it anymore
+                bot.context.pop(request_id)
+
+        except KeyError:
+            # we could not generate request id, because some keys were missing.
+            # we just go with main instance in this case
+            process_update(bot, update)
+
         return JsonResponse(dict(ok=True))
     else:
         return JsonResponse(dict(ok=False), status=400)

@@ -32,6 +32,10 @@ def command_handler(message):
     :param message: Message instance
     :return: None
     """
+    # we do not handle commands in group
+    if not message.chat.type == 'private':
+        return
+
     user, _ = User.objects.get_or_create(uid=message.from_user.id)
     command = message.text[1:]
 
@@ -86,6 +90,10 @@ def text_handler(message):
     :param message: Message instance
     :return: None
     """
+    # we do not process private messages
+    if message.chat.type == 'private':
+        return
+
     user, _ = User.objects.get_or_create(uid=message.from_user.id)
     # we either use text or caption of a photo as an input text
     text = message.text or message.caption or None

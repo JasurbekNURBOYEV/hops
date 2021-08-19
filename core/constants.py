@@ -99,6 +99,12 @@ ADMIN_CMD_RO = 'ro'
 ADMIN_CMD_UNRO = 'unro'
 ADMIN_CMD_CHECK = 'check'
 
+# Greed Island commands
+ADMIN_CMD_MARK_AS_QUESTION = 'maq'
+ADMIN_CMD_MARK_AS_ANSWER = 'maa'
+ADMIN_CMD_REMOVE_QUESTION_TAG = 'rmt'
+
+
 # tips
 TIPS_HEADER = '!'
 

@@ -77,6 +77,19 @@ class Search(object):
 
         return tags, start_of_world, end_of_world
 
+    def collect_tags(self, message: Message) -> List[str]:
+        """
+        Used to collect any kind of tags inside message
+        :param message: message instance
+        :return: list of tag strings
+        """
+        entities = message.entities or message.caption_entities
+        if not entities:
+            return []
+        text = message.text or message.caption
+        tags = [entity for entity in entities if entity.type == 'hashtag']
+        return [self.extract_tag(text, tag.offset, tag.length) for tag in tags]
+
     @staticmethod
     def is_question(message: Message) -> bool:
         """
@@ -98,12 +111,12 @@ class Search(object):
         return False
 
     @staticmethod
-    def is_answer(message: Message) -> Tuple[bool, int, int]:
+    def is_answer(message: Message) -> bool:
         """
         Used to identify if the message is an answer or not.
         If message contains a answer tag, then it is an answer.
         :param message: Telegram message object
-        :return: tuple(is_answer, offset of tag, lentght of tag)
+        :return: bool: True - answer, False - not answer
         """
         # all answers are replied to an exact question
         entities = message.entities or message.caption_entities
@@ -111,9 +124,9 @@ class Search(object):
             for entity in entities:
                 tag_data = Search.extract_tag(message.text or message.caption, entity.offset, entity.length)
                 if entity.type == 'hashtag' and tag_data == strings.gi_answer_tag:
-                    return True, entity.offset, entity.length
+                    return True
             else:
-                return False, 0, 0
+                return False
 
     @staticmethod
     def clean_answer(message: Message) -> str:
@@ -125,10 +138,11 @@ class Search(object):
         start = length = 0
         text = message.text or message.caption
         entities = message.entities or message.caption_entities
-        for entity in entities:
-            tag_data = Search.extract_tag(text, entity.offset, entity.length)
-            if entity.type == 'hashtag' and tag_data == strings.gi_answer_tag:
-                start, length = entity.offset, entity.length
-        if text:
+        if entities:
+            for entity in entities:
+                tag_data = Search.extract_tag(text, entity.offset, entity.length)
+                if entity.type == 'hashtag' and tag_data == strings.gi_answer_tag:
+                    start, length = entity.offset, entity.length
+        if text and not (start + length):
             return f'{text[:start]}{text[start + length:]}'.strip()
         return text

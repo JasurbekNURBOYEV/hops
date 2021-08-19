@@ -6,4 +6,4 @@ class GreedIslandConfig(AppConfig):
     verbose_name = 'Greed Island'
 
     def ready(self):
-        import greed_island.signals
+        import greed_island.signals  # noqa

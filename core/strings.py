@@ -148,10 +148,34 @@ class Strings(object):
     gi_accept_answer_commands = ["✅"]
     gi_question_tag = "savol"
     gi_answer_tag = "javob"
+    gi_marked_as_question = "<a href=\"{msg_link}\">Xabar</a> savol qilib belgilandi va quyidagi taglar qo'shildi: " \
+                            "{new_tags}\n\nJami taglar: {all_tags}"
+    gi_tags_tutorial_link = "https://telegra.ph/Tags-tags-tags-08-17"
+
+    @property
+    def gi_marked_as_question_to_author(self):
+        return "Sizning <a href=\"{msg_link}\">bu xabaringiz</a> adminlar tomonidan 'savol' qilib " \
+               f"belgilab qo'yildi. Iltimos, keyingi safar savol berganda uni " \
+               f"{self.gi_tag_format.format(tag=self.gi_question_tag)} tagi bilan qo'shib yozing.\n\n" \
+               f"Buni to'liqroq o'rganishingiz uchun maqola: {self.gi_tags_tutorial_link}"
+
+    gi_failed_to_mark_as_question = "<a href=\"{msg_link}\">Xabar</a>ni savol qilib belgilab bo'lmadi"
+
+    gi_marked_as_answer = "<a href=\"{msg_link}\">Xabar</a> javob qilib belgilab qo'yildi"
+    gi_failed_to_mark_as_answer = "<a href=\"{msg_link}\">Xabar</a>ni javob qilib belgilab bo'lmadi"
+    gi_tag_removed_from_question = "<a href=\"{msg_link}\">Savol</a>dan mana bu taglar olib tashlandi: " \
+                                   "{removed_tags}\n\nQuyidagi taglar qoldi: {remaining_tags}"
+
+    @property
+    def gi_marked_as_answer_to_author(self):
+        return "Siz <a href=\"{msg_link}\">yozgan xabarni</a> adminlar 'javob' qilib belgilab qo'ydi. Iltimos, " \
+               f"keyingi safar savolga javob berganingizda {self.gi_tag_format.format(tag=self.gi_answer_tag)} tagini" \
+               f" qo'shib yozing. \n\nBuni to'liqroq o'rganishingiz uchun maqola: {self.gi_tags_tutorial_link}"
 
     # generally used strings
     cancelled = "Jarayon bekor qilindi"
     step_not_matched = "Nima?"
+    empty = '-'
 
     keys = ["olma", "yo'lbars", "ruchka", "wifi", "kitob", "toshbaqa", "kaktus", "hamkorlik", "hayot", "kema",
             "televizor", "xanjar", "oyna", "bulut", "stul", "bayroq", "diplom", "tanga", "sirtlon", "tulpor", "tarmoq",

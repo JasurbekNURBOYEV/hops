@@ -5,8 +5,10 @@ and basically anything related to Greed Island.
 """
 import logging
 import traceback
+from typing import List
 
 from telebot.apihelper import ApiTelegramException
+from telebot.types import Message
 
 from core import constants
 from core.factory import HopsBot
@@ -157,3 +159,96 @@ class QuestionNotifier(object):
         except:
             logging.error('Unhandled exception on answer approval notifier:', traceback.format_exc())
         return True
+
+    def notify_about_marking_as_question(self, tags: List[str], message: Message) -> bool:
+        """
+        When user forgets to use specific tag to mark the message as question, other superior users can mark
+        it as question. When they do, we'll try to notify about this. This method is used to do that job.
+        :param message: message instance of question
+        :param tags: list of strings as tags, new tags can be added while marking the question
+        :return: True - success, False - failure
+        """
+
+        # send message to admin
+        try:
+            removed_tags = self.strings.empty
+            if tags:
+                removed_tags = ', '.join([self.strings.gi_tag_format.format(tag=tag) for tag in tags])
+            remaining_tags = self.strings.empty
+            if self.question and self.question.tags.exists():
+                remaining_tags = ', '.join([
+                    self.strings.gi_tag_format.format(tag=tag.name) for tag in self.question.tags.all()])
+            self.bot.send_message(
+                message.from_user.id,
+                text=self.strings.gi_marked_as_question.format(
+                    msg_link=self.urify.get_message_link(message.chat.id, message.message_id),
+                    new_tags=removed_tags,
+                    all_tags=remaining_tags
+                ),
+                parse_mode=constants.DEFAULT_PARSE_MODE,
+                disable_web_page_preview=True
+            )
+        except:
+            logging.error(f'Could not send notification about marking as question: {traceback.format_exc()}')
+
+        # send message to question's author in group
+        try:
+            self.bot.reply_to(
+                message.reply_to_message,
+                text=self.strings.gi_marked_as_question_to_author.format(
+                    msg_link=self.urify.get_message_link(message.chat.id, message.reply_to_message.message_id)
+                ),
+                parse_mode=constants.DEFAULT_PARSE_MODE,
+                disable_web_page_preview=True
+            )
+        except:
+            logging.error(f'Could not send notification to question\'s author: {traceback.format_exc()}')
+        return True
+
+    def notify_about_removing_tags(self, tags: List[str], message: Message):
+        """
+        When some tags are removed from question, we notify people about it.
+        :message: message instance
+        :return: True - success, False - failure
+        """
+        try:
+            removed_tags = self.strings.empty
+            if tags:
+                removed_tags = ', '.join([self.strings.gi_tag_format.format(tag=tag) for tag in tags])
+            remaining_tags = self.strings.empty
+            if self.question and self.question.tags.exists():
+                remaining_tags = ', '.join([
+                    self.strings.gi_tag_format.format(tag=tag.name) for tag in self.question.tags.all()])
+            self.bot.reply_to(
+                message.reply_to_message,
+                text=self.strings.gi_tag_removed_from_question.format(
+                    msg_link=self.urify.get_message_link(message.chat.id, message.reply_to_message.message_id),
+                    removed_tags=removed_tags,
+                    remaining_tags=remaining_tags
+                ),
+                parse_mode=constants.DEFAULT_PARSE_MODE,
+                disable_web_page_preview=True
+            )
+            return True
+        except:
+            logging.error(f'Could not send notification about tag removal of question: {traceback.format_exc()}')
+            return False
+
+    def notify_about_marking_as_answer(self, message: Message) -> bool:
+        """
+        When admins mark message as answer, we notify necessary people about it.
+        :message: message instance
+        :return: True - success, False - failure
+        """
+        try:
+            self.bot.reply_to(
+                message.reply_to_message,
+                text=self.strings.gi_marked_as_answer_to_author.format(
+                    msg_link=self.urify.get_message_link(message.chat.id, message.message_id)),
+                parse_mode=constants.DEFAULT_PARSE_MODE,
+                disable_web_page_preview=True
+            )
+            return True
+        except:
+            logging.error(f'Could not send notification about marking as answer: {traceback.format_exc()}')
+            return False

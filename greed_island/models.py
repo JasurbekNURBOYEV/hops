@@ -60,3 +60,11 @@ class Answer(BaseLayer, MessageMixin):
 
     class Meta:
         db_table = 'answers'
+
+
+class Comment(BaseLayer, MessageMixin):
+    """
+    Basically to save every single message that is a reply to another message
+    """
+    class Meta:
+        db_table = 'comments'

@@ -14,15 +14,18 @@ strings = Strings()
 class Search(object):
 
     @staticmethod
-    def extract_tag(text: str, offset: int, length: int) -> str:
+    def extract_tag(text: str, offset: int, length: int, keep_case: bool = False) -> str:
         """
         Extract tag from message text
+        :param keep_case: by default, tag text is converted into lowercase, this behaviour can be disabled with
+        this parameter
         :param text: input text message
         :param offset: offset
         :param length: length
-        :return: tag
+        :return: tag text
         """
-        return text[offset + 1:offset + length]
+        tag_text = text[offset + 1:offset + length]
+        return tag_text.lower() if not keep_case else tag_text
 
     @staticmethod
     def collect_question_tags(message: Message) -> Tuple[List[str], int, int]:

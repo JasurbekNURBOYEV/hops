@@ -39,7 +39,7 @@ class TagNotifier(object):
         :return: bool indicating the status: True - notified, False - not notified
         """
         # check if Tag instance exists
-        if not self.tag:
+        if not self.tag or not self.tag.author:
             # tag does not exist
             return False
         try:
@@ -63,7 +63,7 @@ class TagNotifier(object):
         :return: bool indicating the status: True - notified, False - not notified
         """
         # check if Tag instance exists
-        if not self.tag:
+        if not self.tag or not self.tag.author:
             # tag does not exist
             return False
         try:

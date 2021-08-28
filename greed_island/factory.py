@@ -144,7 +144,8 @@ def text_handler(message):
                 question_text = message.reply_to_message.text or message.reply_to_message.caption
                 # register new question here
                 question_author, _ = User.objects.get_or_create(uid=message.reply_to_message.from_user.id)
-                question = QuestionRepository.register(question_text, question_author, message.reply_to_message, tags)
+                question = QuestionRepository.register(
+                    question_text, question_author, message.reply_to_message, tags, tag_author=user)
                 notifier = notifications.QuestionNotifier(question, urify, strings, bot)
                 notifier.notify_about_marking_as_question(tags, message)
 

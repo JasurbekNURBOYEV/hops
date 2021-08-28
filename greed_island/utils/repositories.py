@@ -30,9 +30,11 @@ class QuestionRepository(BaseRepository):
     """
 
     @staticmethod
-    def register(question_text: str, user: User, message: Message, tags: Iterable[str]) -> Question or None:
+    def register(question_text: str, user: User, message: Message, tags: Iterable[str],
+                 tag_author: User = None) -> Question or None:
         """
         Used to register new question: save it to database, and do further processing (e.g: notifications)
+        :param tag_author: author of tags, if None, author of question is taken
         :param question_text: clean question text
         :param user: user - author of question
         :param message: message instance of question
@@ -58,7 +60,7 @@ class QuestionRepository(BaseRepository):
                 new_question = False
                 question = existing_instance.first()
             logging.info(f'Question: {question}')
-            QuestionRepository.add_tags(tags, question=question)
+            QuestionRepository.add_tags(tags, question=question, author=tag_author or question.author)
 
             if new_question:
                 logging.info('New question, notifying...')
@@ -88,9 +90,11 @@ class QuestionRepository(BaseRepository):
         return question
 
     @staticmethod
-    def add_tags(tags: Iterable[str], question: Question = None, message_id: int = None) -> Question or None:
+    def add_tags(tags: Iterable[str], question: Question = None, message_id: int = None,
+                 author: User = None) -> Question or None:
         """
         Used to add tags to existing question
+        :param author: author of tags, if None, author of question is taken
         :param question: question instance. at least question or message_id must be provided
         :param message_id: message if of question message
         :param tags: list of strings representing tags
@@ -109,7 +113,7 @@ class QuestionRepository(BaseRepository):
 
         logging.info('Registering the tags...')
         for tag in tags:
-            tag_instance, _ = Tag.objects.get_or_create(name=tag)
+            tag_instance, _ = Tag.objects.get_or_create(name=tag, author=author or question.author)
             question.tags.add(tag_instance)
 
         return question

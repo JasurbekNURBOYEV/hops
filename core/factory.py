@@ -377,6 +377,11 @@ bot = HopsBot(token=settings.BOT_TOKEN)
 @lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
 def command_handler(message):
     try:
+        if not message.chat.type == 'private':
+            # users should use commands only in provate chat, if they use it in group, we just delete the message
+            bot.delete_message(message.chat.id, message.message_id)
+            return
+
         text = message.text
         command = text[1:]
         uid = message.from_user.id

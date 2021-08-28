@@ -25,8 +25,11 @@ def command_handler(message):
     :param message: Message instance
     :return: None
     """
+    logging.info(f'Got command: {message.text}')
     # we do not handle commands in group
     if not message.chat.type == 'private':
+        # users should use commands only in provate chat, if they use it in group, we just delete the message
+        bot.delete_message(message.chat.id, message.message_id)
         return
 
     user, _ = User.objects.get_or_create(uid=message.from_user.id)

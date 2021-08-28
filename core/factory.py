@@ -785,7 +785,8 @@ def text_handler(message):
                         bot.send_message(uid, detail_message, parse_mode=constants.DEFAULT_PARSE_MODE)
                     except:
                         logging.error(traceback.format_exc())
-                bot.delete_message(cid, message.message_id)
+
+            bot.delete_message(cid, message.message_id)
         except:
             bot.send_message(uid, traceback.format_exc())
             logging.error(traceback.format_exc())

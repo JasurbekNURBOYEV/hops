@@ -762,7 +762,7 @@ def text_handler(message):
                                          parse_mode=constants.DEFAULT_PARSE_MODE)
             elif cmd.startswith(constants.ADMIN_CMD_RO):
                 # to restrict user
-                reason = cmd.replace(constants.ADMIN_CMD_RO, '', 1)
+                reason = cmd.replace(constants.ADMIN_CMD_RO, '', 1).strip()
                 target_user, new = models.User.objects.get_or_create(uid=message.reply_to_message.from_user.id)
                 bot.restrict_with_warning(message.reply_to_message, detected_topics=[], user=target_user, reason=reason)
             elif cmd.startswith(constants.ADMIN_CMD_CHECK):

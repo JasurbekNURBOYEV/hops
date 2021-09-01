@@ -22,7 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 # local
 from core import models
 from core.factory import bot
-from core.models import User
+from core.models import User, Tip
 from greed_island.factory import bot as gi_bot, strings
 
 # --- END: IMPORTS
@@ -172,7 +172,8 @@ def show_stats(request, *args, **kwargs):
 
 
 def home(request, *args, **kwargs):
-    return render(request, "core/home.html")
+    tips = Tip.objects.all().values('key', 'message')
+    return render(request, "core/home.html", context={"tips": tips})
 
 
 def tags(request, uuid, *args, **kwargs):

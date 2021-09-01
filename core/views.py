@@ -17,6 +17,7 @@ from django.db.models import F, Q, Count, Exists
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_exempt
 
 # local
@@ -173,6 +174,9 @@ def show_stats(request, *args, **kwargs):
 
 def home(request, *args, **kwargs):
     tips = Tip.objects.all().values('key', 'message')
+    for tip in tips:
+        # line breaks do not work on html, so we change them so they do work
+        tip['message'] = strings.clean_html(tip['message']).replace('\n', '<br>')
     return render(request, "core/home.html", context={"tips": tips})
 
 

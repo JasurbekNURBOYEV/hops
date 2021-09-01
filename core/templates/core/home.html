@@ -117,7 +117,7 @@
             <div class="row row-cols-1 row-cols-md-1">
                 <div class="tip left-align">
                     <h5>{{ tip.key }}</h5>
-                    <p>{{ tip.message }}</p>
+                    <p>{{ tip.message | safe }}</p>
                 </div>
             </div>
         {% endfor %}

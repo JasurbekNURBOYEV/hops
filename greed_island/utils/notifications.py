@@ -244,7 +244,7 @@ class QuestionNotifier(object):
             self.bot.reply_to(
                 message.reply_to_message,
                 text=self.strings.gi_marked_as_answer_to_author.format(
-                    msg_link=self.urify.get_message_link(message.chat.id, message.message_id)),
+                    msg_link=self.urify.get_message_link(message.chat.id, message.reply_to_message.message_id)),
                 parse_mode=constants.DEFAULT_PARSE_MODE,
                 disable_web_page_preview=True
             )

@@ -458,6 +458,11 @@ def new_chat_member_handler(message):
             if message.chat.id not in constants.ALLOWED_CHATS:
                 # this group is not allowed, so we are gonna leave
                 bot.leave_chat(message.chat.id)
+        #detecting and removing bots from group
+        #start monarchy
+        elif guest.is_bot:
+            bot.kick_chat_member(message.chat.id, guest.id)
+        #end monarchy
         elif not guest.is_bot:
             # we have new member in our allowed chat
             # our guest may have a very unpleasent nickname

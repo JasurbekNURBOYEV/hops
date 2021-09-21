@@ -458,14 +458,14 @@ def new_chat_member_handler(message):
             if message.chat.id not in constants.ALLOWED_CHATS:
                 # this group is not allowed, so we are gonna leave
                 bot.leave_chat(message.chat.id)
-        #detecting and removing bots from group
-        #start monarchy
+        # detecting and removing bots from group
+        # start monarchy
         elif guest.is_bot:
             bot.kick_chat_member(message.chat.id, guest.id)
-        #end monarchy
+        # end monarchy
         elif not guest.is_bot:
             # we have new member in our allowed chat
-            # our guest may have a very unpleasent nickname
+            # our guest may have a very unpleasant nickname
             # we are going to normalize it
             guest_name = guest.first_name
             if guest.last_name:
@@ -513,7 +513,7 @@ def new_chat_member_handler(message):
                     # we probably could not restrict the user due to lack of admin rights
                     logging.error(traceback.format_exc())
                 except Exception:
-                    # fatal error occured
+                    # fatal error occurred
                     logging.error(traceback.format_exc())
             else:
                 # since user is not new user, we may have old warning message
@@ -791,7 +791,11 @@ def text_handler(message):
                     except:
                         logging.error(traceback.format_exc())
 
+            elif cmd.startswith(constants.ADMIN_CMD_DELETE):
+                # single message delete command without any restrictions
+                bot.delete_message(message.chat.id, message.reply_to_message.id)
             bot.delete_message(cid, message.message_id)
+
         except:
             bot.send_message(uid, traceback.format_exc())
             logging.error(traceback.format_exc())

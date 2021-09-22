@@ -98,6 +98,7 @@ ADMIN_CMD_HEADER = 'sudo '
 ADMIN_CMD_RO = 'ro'
 ADMIN_CMD_UNRO = 'unro'
 ADMIN_CMD_CHECK = 'check'
+ADMIN_CMD_DELETE = 'del'
 
 # Greed Island commands
 ADMIN_CMD_MARK_AS_QUESTION = 'maq'

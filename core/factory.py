@@ -134,7 +134,8 @@ class HopsBot(telebot.TeleBot):
             # if user is not a member, using the bot is considered violation
             self.set_context(message, 'violation', True)
 
-    def set_next_step(self, user: models.User, step: int, temp_data: str = None) -> None:
+    @staticmethod
+    def set_next_step(user: models.User, step: int, temp_data: str = None) -> None:
         """
         Just to save current step of user
         :param user: user instance
@@ -302,7 +303,8 @@ class HopsBot(telebot.TeleBot):
         # set red flag to inform GI about violation
         self.set_context(message, 'violation', True)
 
-    def get_daily_limit(self, user: models.User) -> int:
+    @staticmethod
+    def get_daily_limit(user: models.User) -> int:
         """
         Returns daily limit for a user to run code in group
         :param user:
@@ -418,7 +420,7 @@ def command_handler(message):
                             )
                             bot.set_next_step(user, constants.STEP_AGREEMENT_WAITING_FOR_CONFIRMATION, chat_id)
                             # done
-            except:
+            except:  # noqa
                 logging.error(traceback.format_exc())
 
         # cancel command
@@ -435,7 +437,7 @@ def command_handler(message):
             bot.set_next_step(user, constants.STEP_TEST_WAITING_TO_START)
             quizzes_count = models.Quiz.all().count()
             bot.send_message(uid, text=bot.strings.start_test.format(count=quizzes_count))
-    except:
+    except:  # noqa
         logging.error(f'Fatal error in command handler: {traceback.format_exc()}')
 
 
@@ -512,7 +514,7 @@ def new_chat_member_handler(message):
                 except telebot.apihelper.ApiTelegramException:
                     # we probably could not restrict the user due to lack of admin rights
                     logging.error(traceback.format_exc())
-                except Exception:
+                except:  # noqa
                     # fatal error occurred
                     logging.error(traceback.format_exc())
             else:
@@ -521,7 +523,7 @@ def new_chat_member_handler(message):
                 if user.welcome_message_id:
                     try:
                         bot.delete_message(message.chat.id, user.welcome_message_id)
-                    except:
+                    except:  # noqa
                         # if we can't, we can't
                         pass
                 # scenario 2: user is old, and already agreed on rules
@@ -715,7 +717,7 @@ def text_handler(message):
         except telebot.apihelper.ApiTelegramException:
             # maybe we are not a memeber of board group?
             logging.error(traceback.format_exc())
-        except:
+        except:  # noqa
             # fatal error
             logging.error(traceback.format_exc())
 
@@ -730,7 +732,7 @@ def text_handler(message):
             # but it might be deleted while we were searching for tips
             try:
                 bot.reply_to(message.reply_to_message, tip.message, parse_mode=constants.DEFAULT_PARSE_MODE)
-            except:
+            except:  # noqa
                 # we could not reply, maybe message is already deleted
                 pass
 
@@ -757,7 +759,7 @@ def text_handler(message):
                                 can_add_web_page_previews=True,
                                 can_invite_users=True,
                             )
-                        except:
+                        except:  # noqa
                             logging.error(traceback.format_exc())
                         bot.reply_to(message, bot.strings.restrictions_lifted, parse_mode=constants.DEFAULT_PARSE_MODE)
                     else:
@@ -783,12 +785,13 @@ def text_handler(message):
                             last_restriction_time = (delta_object.days, delta_object.seconds // 3600)
                         remaining_daily_limit = bot.get_remaining_limit(target_user)
                         detail_message = bot.strings.admin_check_user_details_template.format(
-                            certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%" if certificate else "-",
+                            certificate=f"{certificate.class_name}: {certificate.percentage:.2f}%"
+                            if certificate else "-",
                             last_restriction=f"{last_restriction_time[0]} kun, {last_restriction_time[1]} soat",
                             remaining_daily_limit=remaining_daily_limit
                         )
                         bot.send_message(uid, detail_message, parse_mode=constants.DEFAULT_PARSE_MODE)
-                    except:
+                    except:  # noqa
                         logging.error(traceback.format_exc())
 
             elif cmd.startswith(constants.ADMIN_CMD_DELETE):
@@ -796,7 +799,7 @@ def text_handler(message):
                 bot.delete_message(message.chat.id, message.reply_to_message.id)
             bot.delete_message(cid, message.message_id)
 
-        except:
+        except:  # noqa
             bot.send_message(uid, traceback.format_exc())
             logging.error(traceback.format_exc())
 
@@ -853,7 +856,7 @@ def text_handler(message):
                             input_header=constants.DEFAULT_INPUT_HEADER),
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
-                except:
+                except:  # noqa
                     # it seems that user blocked us
                     pass
             else:
@@ -930,7 +933,7 @@ def image_handler(message):
         if detected_topics:
             # restrict & warn
             bot.restrict_with_warning(message, detected_topics, user)
-    except:
+    except:  # noqa
         logging.error(traceback.format_exc())
 
 
@@ -954,7 +957,7 @@ def edited_image_handler(message):
         if detected_topics:
             # restrict & warn
             bot.restrict_with_warning(message, detected_topics, user)
-    except:
+    except:  # noqa
         logging.error(traceback.format_exc())
 
 
@@ -1020,13 +1023,13 @@ def callback_handler(call):
                                         score_percentage,
                                         timezone.now().strftime("%Y-%m-%d")
                                     )
-                                except Exception:
+                                except:  # noqa
                                     # something really bad happened
                                     logging.error(traceback.format_exc())
                                     image = image_name = None
                                 user.full_name = user.temp_data
                                 user.save()
-                                certificate = models.Certificate.create(
+                                models.Certificate.create(
                                     user=user,
                                     score=current_score,
                                     percentage=score_percentage,
@@ -1112,10 +1115,12 @@ def callback_handler(call):
                 bot.delete_message(chat_id=call.message.chat.id, message_id=call.message.message_id)
             else:
                 # redirect him to bot chat where s/he can see rules
+                cmd_data = constants.CALLBACK_DATA_HEADER_SEPARATOR.join(
+                    [constants.CMD_DATA_RULES, str(call.message.chat.id)])
                 bot.answer_callback_query(
                     call.id,
                     url=f"https://t.me/{bot.username}?start="
-                        f"{constants.CALLBACK_DATA_HEADER_SEPARATOR.join([constants.CMD_DATA_RULES, str(call.message.chat.id)])}"
+                        f"{cmd_data}"
                 )
     elif header == constants.CALLBACK_DATA_HEADER_START_TEST:
         # user is gonna start a test for certification
@@ -1174,14 +1179,14 @@ def edited_message_handler(message):
                         bot.strings.code_please_provide_input.format(input_header=constants.DEFAULT_INPUT_HEADER),
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
-                except:
+                except:  # noqa
                     # maybe we are blocked by user
                     pass
                 # code requires input, so we can safely delete our response
                 # and wait for user input
                 try:
                     bot.delete_message(cid, existing_code.response_message_id)
-                except:
+                except:  # noqa
                     # we could not delete, maybe we never had the response :\
                     pass
             else:
@@ -1193,7 +1198,7 @@ def edited_message_handler(message):
                             existing_code.user.uid, bot.strings.code_result_errors_detected_tip,
                             parse_mode=constants.DEFAULT_PARSE_MODE
                         )
-                    except:
+                    except:  # noqa
                         # we could not send message, maybe user blocked us
                         pass
                 # response may include prohibited topics

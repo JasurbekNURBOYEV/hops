@@ -156,7 +156,7 @@ class QuestionNotifier(object):
             # could not send the message
             logging.error('Could not send notification about answer approval:', a)
             return False
-        except:
+        except:  # noqa
             logging.error('Unhandled exception on answer approval notifier:', traceback.format_exc())
         return True
 
@@ -188,7 +188,7 @@ class QuestionNotifier(object):
                 parse_mode=constants.DEFAULT_PARSE_MODE,
                 disable_web_page_preview=True
             )
-        except:
+        except:  # noqa
             logging.error(f'Could not send notification about marking as question: {traceback.format_exc()}')
 
         # send message to question's author in group
@@ -201,7 +201,7 @@ class QuestionNotifier(object):
                 parse_mode=constants.DEFAULT_PARSE_MODE,
                 disable_web_page_preview=True
             )
-        except:
+        except:  # noqa
             logging.error(f'Could not send notification to question\'s author: {traceback.format_exc()}')
         return True
 
@@ -230,7 +230,7 @@ class QuestionNotifier(object):
                 disable_web_page_preview=True
             )
             return True
-        except:
+        except:  # noqa
             logging.error(f'Could not send notification about tag removal of question: {traceback.format_exc()}')
             return False
 
@@ -249,6 +249,6 @@ class QuestionNotifier(object):
                 disable_web_page_preview=True
             )
             return True
-        except:
+        except:  # noqa
             logging.error(f'Could not send notification about marking as answer: {traceback.format_exc()}')
             return False

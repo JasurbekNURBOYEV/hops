@@ -761,7 +761,8 @@ def text_handler(message):
                             )
                         except:  # noqa
                             logging.error(traceback.format_exc())
-                        bot.reply_to(message, bot.strings.restrictions_lifted, parse_mode=constants.DEFAULT_PARSE_MODE)
+                        bot.reply_to(message.reply_to_message, bot.strings.restrictions_lifted,
+                                     parse_mode=constants.DEFAULT_PARSE_MODE)
                     else:
                         # user has 0 (or less) restriction time, we can't do anything here
                         # we send a useful tip to user

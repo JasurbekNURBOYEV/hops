@@ -113,7 +113,7 @@ class QuestionRepository(BaseRepository):
 
         logging.info('Registering the tags...')
         for tag in tags:
-            tag_instance, _ = Tag.objects.get_or_create(name=tag, author=author or question.author)
+            tag_instance, _ = Tag.objects.get_or_create(name=tag, defaults=dict(author=author or question.author))
             question.tags.add(tag_instance)
 
         return question

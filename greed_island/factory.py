@@ -150,7 +150,8 @@ def text_handler(message):
                 question = QuestionRepository.register(
                     question_text, question_author, message.reply_to_message, tags, tag_author=user)
                 notifier = notifications.QuestionNotifier(question, urify, strings, bot)
-                notifier.notify_about_marking_as_question(tags, message)
+                # notify question author
+                notifier.notify_about_marking_as_question(tags, message.reply_to_message)
 
                 bot.delete_message(cid, message.message_id)
 

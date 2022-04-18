@@ -224,7 +224,7 @@ def tags(request, uuid, *args, **kwargs):
             return generate_tags_dashboard(user)
         else:
             # we have request to change tag subscription
-            # filter to extact PKs only
+            # filter to exact PKs only
             tag_pks = [int(pk) for pk in query.getlist('tag') if pk.isdigit()]
 
             # register new tags

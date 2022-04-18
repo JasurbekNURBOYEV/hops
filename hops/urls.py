@@ -16,7 +16,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 from core import views as core_views
 from core.views import show_stats, home, tags
@@ -26,6 +26,7 @@ urlpatterns = [
     path(settings.BOT_TOKEN, core_views.handle_webhook_requests),
     path('stats/', show_stats),
     path('tags/<uuid>/', tags),
+    path('api/', include("api.urls")),
     path('', home),
 ]
 

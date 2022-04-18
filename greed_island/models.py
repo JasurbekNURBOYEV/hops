@@ -25,7 +25,7 @@ class Tag(BaseLayer):
     Tag is what specifies category of a question. A question may include multiple tags.
     Do you remember the "game of tags"? If tag is your target, then you should get it at any cost.
     We'll make it possible by any means.
-    We still lack certain things: card, its specs, implemetation. I don't even know how to imagine it. Need more time.
+    We still lack certain things: card, its specs, implementation. I don't even know how to imagine it. Need more time.
     """
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=127, unique=True)
@@ -43,7 +43,7 @@ class Question(BaseLayer, MessageMixin):
     This is a question, like a task to achieve a card.
     You answer the question, owner approves, you get the card.
     However, I'm not sure about the card part yet. It is super complicated even to think about it.
-    Implementation details fall far beyond that complexty level...
+    Implementation details fall far beyond that complexity level...
     """
     tags = models.ManyToManyField(Tag, related_name='questions')
 

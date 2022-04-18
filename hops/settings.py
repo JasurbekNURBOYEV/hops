@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'drf_yasg2',
+    'rest_framework',
     'core',
     'greed_island',
 ]
@@ -178,3 +180,9 @@ PROHIBITED_TOPICS = [
 
 DOMAIN_URL = os.environ.get('DOMAIN_URL')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'greed_island.utils.pagination.CustomPagination',
+    'PAGE_SIZE': 50
+}

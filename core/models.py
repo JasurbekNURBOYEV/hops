@@ -81,7 +81,7 @@ class User(BaseLayer):
     To store users
     """
     uid = models.IntegerField(unique=True)
-    uuid = models.UUIDField(null=True, blank=True, default=None)
+    uuid = models.UUIDField(null=True, blank=True, default=None, unique=True)
     full_name = models.TextField(null=True, blank=True)
     step = models.PositiveSmallIntegerField(default=0)
     temp_data = models.TextField(null=True, blank=True)

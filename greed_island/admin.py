@@ -18,7 +18,7 @@ class TagAdmin(admin.ModelAdmin):
     sortable_by = ('name',)
 
     def get_queryset(self, request):
-        # to order results by frequence: trending tags first
+        # to order results by frequency: trending tags first
         queryset = super(TagAdmin, self).get_queryset(request)
         return queryset.annotate(asked_count=Count('questions')).order_by('-asked_count')
 

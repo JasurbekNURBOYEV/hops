@@ -8,3 +8,4 @@ pytesseract==0.3.7
 pytz~=2020.1
 djangorestframework==3.13.1
 drf-yasg2==1.19.3
+django-cors-headers==3.5.0

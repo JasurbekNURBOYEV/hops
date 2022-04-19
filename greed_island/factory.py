@@ -16,6 +16,7 @@ from greed_island.constants import bot, urify, strings, dog
 from greed_island.models import Tag, Answer, Comment, Question
 from greed_island.utils import notifications
 from greed_island.utils.repositories import QuestionRepository, AnswerRepository, CommentRepository
+from utils.web_ui_tools import WebButton
 
 
 @bot.message_handler(commands=[constants.COMMAND_TAGS])
@@ -66,6 +67,13 @@ def command_handler(message):
                 )
             )
             bot.reply_to(message, text=tags_message, parse_mode=constants.DEFAULT_PARSE_MODE, reply_markup=buttons)
+
+            markup_with_web_ui = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            markup_with_web_ui.add(
+                WebButton(text="Taglarga a'zo bo'lish", url=f"{settings.DOMAIN_URL}/web_ui/tags/index.html")
+            )
+            bot.reply_to(message, text=tags_message, parse_mode=constants.DEFAULT_PARSE_MODE,
+                         reply_markup=markup_with_web_ui)
         except:
             logging.error(traceback.format_exc())
 

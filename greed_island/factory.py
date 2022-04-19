@@ -70,7 +70,10 @@ def command_handler(message):
 
             markup_with_web_ui = types.ReplyKeyboardMarkup(resize_keyboard=True)
             markup_with_web_ui.add(
-                WebButton(text="Taglarga a'zo bo'lish", url=f"{settings.DOMAIN_URL}/web_ui/tags/index.html")
+                WebButton(
+                    text="Taglarga a'zo bo'lish",
+                    url=f"{settings.DOMAIN_URL}/web_ui/tags/index.html?user={user.uuid}"
+                )
             )
             bot.reply_to(message, text=tags_message, parse_mode=constants.DEFAULT_PARSE_MODE,
                          reply_markup=markup_with_web_ui)

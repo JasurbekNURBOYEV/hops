@@ -3,10 +3,9 @@ from drf_yasg2.openapi import Parameter
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from greed_island.models import Tag, Question
+from greed_island.models import Tag
 from core.models import User
 from greed_island.serializers import TagSerializer, TagRequestSerializer
 

@@ -25,7 +25,8 @@ class TagSerializer(ModelSerializer):
 
 class TagRequestSerializer(Serializer):
     user = SlugRelatedField(slug_field='uuid', queryset=User.all())
-    tags = PrimaryKeyRelatedField(queryset=Tag.all(), many=True)
+    enabled = PrimaryKeyRelatedField(queryset=Tag.all(), many=True)
+    disabled = PrimaryKeyRelatedField(queryset=Tag.all(), many=True)
 
     def update(self, instance, validated_data):
         pass
@@ -34,11 +35,12 @@ class TagRequestSerializer(Serializer):
         tag = Tag.all().first()
 
         user = validated_data["user"]
-        tags = validated_data["tags"]
-        for tag in Tag.all():
-            if tag not in tags:
-                tag.subscribers.remove(user)
-            else:
-                tag.subscribers.add(user)
+        enabled = validated_data["enabled"]
+        disabled = validated_data["disabled"]
+
+        for tag in enabled:
+            tag.subscribers.add(user)
+        for tag in disabled:
+            tag.subscribers.remove(user)
 
         return tag

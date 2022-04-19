@@ -2,7 +2,7 @@ from django.db.models import Count, Exists, Subquery, F, OuterRef
 from drf_yasg2.openapi import Parameter
 from drf_yasg2 import openapi
 from drf_yasg2.utils import swagger_auto_schema
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 
 from greed_island.models import Tag
@@ -13,6 +13,11 @@ from greed_island.serializers import TagSerializer, TagRequestSerializer
 class TagsViewSet(viewsets.GenericViewSet, viewsets.mixins.ListModelMixin, viewsets.mixins.CreateModelMixin):
     queryset = Tag.all()
     serializer_class = TagSerializer
+
+    search_fields = [
+        'name',
+    ]
+    filter_backends = (filters.SearchFilter,)
 
     def get_queryset(self):
         self.user = None  # noqa

@@ -11,6 +11,7 @@ class Strings(object):
     # strings related to testing process
     welcome = "Hey! Ahvollar qalay!"
     you_are_not_a_member = "Botdan foydalanish uchun asosiy guruh a'zosi bo'lishingiz kerak."
+    you_are_blogger = "Kanal nomidan yozish mumkin emas."
 
     # new member
     new_member = "Salom <a href=\"tg://user?id={uid}\">{name}</a>! Python guruhiga xush kelibsiz!\n\nSiz hozir " \

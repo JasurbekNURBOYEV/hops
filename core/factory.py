@@ -124,35 +124,15 @@ class HopsBot(telebot.TeleBot):
             # whitelist is a whitelist, we don't lock whitelisted users
             return True
         return False
-    
-    def is_blogger(self, message: Message) -> bool:
-        """
-        Checks if the user is writing as a channel
-        """
-        user = message.from_user
-        if user.first_name == 'Channel' and user.is_bot:
-            return True
-        return False
-    
-    def notify_about_membership(self, message, is_blogger: bool = False) -> None:
-        """
-        Notify the user that he/she is not a member,
-        if he/she is blogger also
-        """
+
+    def notify_about_membership(self, message) -> None:
         try:
-            if is_blogger:
-                text = self.strings.you_are_blogger
-                # delete sent message as a channel
-                self.delete_message(message.chat.id, message.message_id)
-            else:
-                text = self.strings.you_are_not_a_member
-                
-            self.send_message(message.from_user.id, text)
+            self.send_message(message.from_user.id, self.strings.you_are_not_a_member)
         except telebot.apihelper.ApiTelegramException:
             pass
         finally:
             # if user is not a member, using the bot is considered violation
-            None if is_blogger else self.set_context(message, 'violation', True)
+            self.set_context(message, 'violation', True)
 
     @staticmethod
     def set_next_step(user: models.User, step: int, temp_data: str = None) -> None:

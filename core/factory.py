@@ -396,7 +396,7 @@ bot = HopsBot(token=settings.BOT_TOKEN)
 
 # command handlers
 @bot.message_handler(commands=[constants.COMMAND_START, constants.COMMAND_CANCEL, constants.COMMAND_TEST])
-@lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
+@lock_method_for_strangers(checker=bot.is_member, stop_bloggers=bot.is_blogger, default=bot.notify_about_membership)
 def command_handler(message):
     try:
         if not message.chat.type == 'private':
@@ -612,7 +612,7 @@ def new_chat_member_handler(message):
 
 # here we try to handle text messages
 @bot.message_handler(content_types=['text'])
-@lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
+@lock_method_for_strangers(checker=bot.is_member, stop_bloggers=bot.is_blogger, default=bot.notify_about_membership)
 def text_handler(message):
     uid = message.from_user.id
     cid = message.chat.id
@@ -936,7 +936,7 @@ def text_handler(message):
 
 # photo handler
 @bot.message_handler(content_types=['photo'])
-@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
+@lock_method_for_strangers(bot.is_member, stop_bloggers=bot.is_blogger, bot.notify_about_membership)
 def image_handler(message):
     uid = message.from_user.id
     user, new = models.User.objects.get_or_create(uid=uid)

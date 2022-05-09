@@ -130,9 +130,7 @@ class HopsBot(telebot.TeleBot):
         Checks if the user is writing as a channel
         """
         user = message.from_user
-        if user.first_name == 'Channel' and user.is_bot:
-            return True
-        return False
+        return user.first_name == 'Channel' and user.is_bot
     
     def notify_about_membership(self, message, is_blogger: bool = False) -> None:
         """

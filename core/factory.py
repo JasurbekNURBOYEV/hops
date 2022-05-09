@@ -132,26 +132,26 @@ class HopsBot(telebot.TeleBot):
         user = message.from_user
         return user.first_name == 'Channel' and user.is_bot
     
-    def notify_about_membership(self, message, is_blogger: bool = False) -> None:
-        """
-        Notify the user that he/she is not a member,
-        if he/she is blogger also
-        """
+    def notify_about_membership(self, message) -> None:
         try:
-            if is_blogger:
-                text = self.strings.you_are_blogger
-                # delete sent message as a channel
-                self.delete_message(message.chat.id, message.message_id)
-            else:
-                text = self.strings.you_are_not_a_member
-                
-            self.send_message(message.from_user.id, text)
+            self.send_message(message.from_user.id, self.strings.you_are_not_a_member)
         except telebot.apihelper.ApiTelegramException:
             pass
         finally:
             # if user is not a member, using the bot is considered violation
-            None if is_blogger else self.set_context(message, 'violation', True)
-
+            self.set_context(message, 'violation', True)
+    
+    def notify_about_violation(self, message) -> None:
+        try:
+            # delete sent message as a channel
+            self.delete_message(message.chat.id, message.message_id)
+            # notify user about this
+            self.send_message(message.from_user.id, self.strings.you_are_blogger)
+        except telebot.apihelper.ApiTelegramException:
+            pass
+        finally:
+            self.set_context(message, 'violation', True)
+            
     @staticmethod
     def set_next_step(user: models.User, step: int, temp_data: str = None) -> None:
         """
@@ -610,7 +610,7 @@ def new_chat_member_handler(message):
 
 # here we try to handle text messages
 @bot.message_handler(content_types=['text'])
-@lock_method_for_strangers(checker=bot.is_member, stop_bloggers=bot.is_blogger, default=bot.notify_about_membership)
+@lock_method_for_strangers(checker=bot.is_member, default=bot.notify_about_membership)
 def text_handler(message):
     uid = message.from_user.id
     cid = message.chat.id
@@ -934,7 +934,7 @@ def text_handler(message):
 
 # photo handler
 @bot.message_handler(content_types=['photo'])
-@lock_method_for_strangers(bot.is_member, stop_bloggers=bot.is_blogger, bot.notify_about_membership)
+@lock_method_for_strangers(bot.is_member, bot.notify_about_membership)
 def image_handler(message):
     uid = message.from_user.id
     user, new = models.User.objects.get_or_create(uid=uid)

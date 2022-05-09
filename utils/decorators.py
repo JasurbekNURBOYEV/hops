@@ -33,7 +33,7 @@ def lock_method_for_strangers(
             # method seems to be lockable, let's try to lock it
             def lockable(message, *args, **kwargs):
                 # if chat is not in whitelist, we need to lock it
-                if checker(message.from_user.id, white_list):
+                if checker(message, white_list):
                     # method is not locked
                     return method(message, *args, **kwargs)
                 # method is locked

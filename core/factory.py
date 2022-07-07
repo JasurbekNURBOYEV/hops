@@ -269,7 +269,7 @@ class HopsBot(telebot.TeleBot):
                         for topic, words in detected_topics
                     ]
                 ) if not reason else reason,
-                user_name=message.from_user.first_name,
+                user_name=self.strings.clean_html(message.from_user.first_name),
                 user_id=message.from_user.id,
                 date=(until_date.replace(tzinfo=pytz.UTC)).strftime("%Y-%m-%d %H:%M")
             )

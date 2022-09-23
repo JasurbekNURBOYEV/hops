@@ -173,7 +173,7 @@ PROHIBITED_TOPICS = [
         "whitelist": [
             "botan", "botanik", "botqa", "hisobot", "astrobot", "yunusobot", "botiq", "botmon", "robotexnika",
             "botma", "botanika", "botqo", "botgan", "botkan", "botib", "botir", "botak", "botmon", "razrabot",
-            "obrabot", "robot", "isbot", "rabot", "umrbot", "botstrap", "boot", "bootcamp", "botcamp"
+            "obrabot", "robot", "isbot", "rabot", "umrbot", "botstrap", "boot", "bootcamp", "botcamp", "both",
         ],
         "hint": "Bu mavzuda gaplashish uchun quyidagi guruhlarga kirishingiz mumkin: @botlarhaqida, @telebot_uz, "
                 "@python_uz_offtopic"

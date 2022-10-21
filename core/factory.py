@@ -6,7 +6,7 @@ This is a bot factory module which is roughly used to create full bot instance
 import json
 import random
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union
 from random import shuffle
 import logging
 import traceback
@@ -344,7 +344,7 @@ class HopsBot(telebot.TeleBot):
 
     def should_check_for_prohibited_topic(self, message) -> bool:
         """
-        Detectes if the message should be analyzed for prohibited topics.
+        Detects if the message should be analyzed for prohibited topics.
         We don't do it if chat is private or user is admin or owner
         :param message:
         :return:
@@ -367,6 +367,42 @@ class HopsBot(telebot.TeleBot):
         elif uid == settings.DEV_ID:
             return True
         return False
+
+    def send_message(
+        self, chat_id: Union[int, str], text: str,
+        parse_mode: Optional[str] = None,
+        entities: Optional[List[types.MessageEntity]] = None,
+        disable_web_page_preview: Optional[bool] = None,
+        disable_notification: Optional[bool] = None,
+        protect_content: Optional[bool] = None,
+        reply_to_message_id: Optional[int] = None,
+        allow_sending_without_reply: Optional[bool] = None,
+        reply_markup: Optional[List] = None,
+        timeout: Optional[int] = None,
+    ) -> Optional[types.Message]:
+        """
+        The silent version of the original send_message.
+        It is silent because it doesn't raise exceptions (at least this was what I thought).
+
+        :return: Message on success, otherwise None.
+        """
+        try:
+            return super().send_message(
+                text=text,
+                chat_id=chat_id,
+                parse_mode=parse_mode,
+                entities=entities,
+                disable_web_page_preview=disable_web_page_preview,
+                disable_notification=disable_notification,
+                protect_content=protect_content,
+                reply_to_message_id=reply_to_message_id,
+                allow_sending_without_reply=allow_sending_without_reply,
+                reply_markup=reply_markup,
+                timeout=timeout
+            )
+        except:  # noqa
+            logging.error("Error occurred while trying to send a message", exc_info=True)
+            return None
 
 
 # --- START: definition of bot instance
@@ -715,7 +751,7 @@ def text_handler(message):
             # let's clean this mess
             bot.delete_message(message.chat.id, message.message_id)
         except telebot.apihelper.ApiTelegramException:
-            # maybe we are not a memeber of board group?
+            # maybe we are not a member of board group?
             logging.error(traceback.format_exc())
         except:  # noqa
             # fatal error
@@ -742,11 +778,11 @@ def text_handler(message):
         try:
             if cmd.startswith(constants.ADMIN_CMD_UNRO):
                 # work on "Read-Only" stuff
-                # to unrestrict the user
+                # to un-restrict the user
                 restriction = models.Restriction.filter(
                     restriction_message_id=message.reply_to_message.message_id).last()
                 if restriction:
-                    # we try to unrestrict
+                    # we try to un-restrict
                     if restriction.seconds > 0:
                         restriction.seconds -= constants.DEFUALT_RESTRICTION_SECONDS
                         try:

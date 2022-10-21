@@ -3,7 +3,7 @@ daphne==3.0.1
 django~=3.1.12
 dreamgraph==1.1.6
 pillow~=7.2.0
-pytelegrambotapi==3.7.4
+pytelegrambotapi==4.7.1
 pytesseract==0.3.7
 pytz~=2020.1
 djangorestframework==3.13.1

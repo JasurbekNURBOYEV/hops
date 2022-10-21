@@ -29,7 +29,7 @@ def command_handler(message):
     logging.info(f'Got command: {message.text}')
     # we do not handle commands in group
     if not message.chat.type == 'private':
-        # users should use commands only in provate chat, if they use it in group, we just delete the message
+        # users should use commands only in private chat, if they use it in group, we just delete the message
         bot.delete_message(message.chat.id, message.message_id)
         return
 
@@ -194,7 +194,20 @@ def text_handler(message):
                 notifier.notify_about_removing_tags(tags, message)
 
                 bot.delete_message(cid, message.message_id)
-        except:
+
+            if cmd.startswith(constants.ADMIN_CMD_MARK_AS_CORRECT):
+                # admin decided to approve the answer, because it seems to be a correct one.
+                answer = Answer.get(
+                    message_id=message.reply_to_message.message_id if message.reply_to_message else None)
+                if answer:
+                    question_notifier = notifications.QuestionNotifier(
+                        answer.question, urify=urify, strings=strings, bot=bot)
+                    # send notification to that legendary user who answered correctly
+                    question_notifier.notify_about_approval_by_admin(admin_chat_id=uid, answer_pk_instance=answer)
+                    # mark the answer as accepted
+                    answer.is_accepted = True
+                    answer.save()
+        except:  # noqa
             logging.error(traceback.format_exc())
 
     if message.reply_to_message:

@@ -5,7 +5,7 @@ and basically anything related to Greed Island.
 """
 import logging
 import traceback
-from typing import List
+from typing import List, Union, Optional
 
 from telebot.apihelper import ApiTelegramException
 from telebot.types import Message
@@ -131,25 +131,47 @@ class QuestionNotifier(object):
                 logging.error("Could not notify tag subscribers:", traceback.format_exc())
         return True
 
-    def notify_about_approval(self, answer_pk_instance: int or Answer) -> bool:
+    @staticmethod
+    def validate_answer_pk_instance(answer_pk_instance: Union[int, Answer]) -> Optional[Answer]:
+        """
+        Validate if it is a correct PK or Answer instance.
+
+        :param answer_pk_instance: PK or Answer instance.
+        :return: Answer instance on success.
+        """
+        if isinstance(answer_pk_instance, int):
+            return Answer.get(pk=answer_pk_instance)
+        elif isinstance(answer_pk_instance, Answer):
+            return answer_pk_instance
+        else:
+            raise ValueError(f"answer_pk_instance must be int or Answer instance, found {type(answer_pk_instance)}")
+
+    def notify_about_approval(
+        self,
+        answer_pk_instance: int or Answer,
+        by_admin: bool = False,
+        force_notify: bool = False,
+    ) -> bool:
         """
         Send notification to author of answer: their answer has been accepted as correct solution
         :param answer_pk_instance: PK of Answer or its instance
+        :param by_admin: Whether answer approved by admin or not.
+        :param force_notify: Whether we should send notification even if the answer is already accepted.
         :return: bool indicating the status: True - notified, False - not notified
         """
-        if isinstance(answer_pk_instance, int):
-            answer = Answer.get(pk=answer_pk_instance)
-        elif isinstance(answer_pk_instance, Answer):
-            answer = answer_pk_instance
-        else:
-            raise ValueError(f"answer_pk_instance must be int or Answer instance, found {type(answer_pk_instance)}")
+        answer = self.validate_answer_pk_instance(answer_pk_instance)
+        if answer.is_accepted and not force_notify:
+            return False
+
+        template = self.strings.gi_answer_accepted_by_questioner
+        if by_admin:
+            template = self.strings.gi_answer_accepted_by_admin
 
         try:
             self.bot.send_message(
                 chat_id=answer.author.uid,
-                text=self.strings.gi_answer_accepted_by_questioner.format(
-                    link_to_answer_message=self.urify.get_message_link(answer.chat_id, answer.message_id)
-                ),
+                text=template.format(
+                    link_to_answer_message=self.urify.get_message_link(answer.chat_id, answer.message_id)),
                 parse_mode=constants.DEFAULT_PARSE_MODE
             )
         except ApiTelegramException as a:
@@ -159,6 +181,39 @@ class QuestionNotifier(object):
         except:  # noqa
             logging.error('Unhandled exception on answer approval notifier:', traceback.format_exc())
         return True
+
+    def notify_about_approval_by_admin(self, admin_chat_id: int, answer_pk_instance: int or Answer) -> None:
+        """
+        Send notification to author of answer and to admin who marked the answer as correct:
+        their answer has been accepted as a correct solution.
+
+        :param answer_pk_instance: PK of Answer or its instance.
+        :param admin_chat_id: Chat ID of admin who marked the answer as correct.
+        """
+        try:
+            answer = self.validate_answer_pk_instance(answer_pk_instance)
+        except ValueError as err:
+            self.bot.send_message(admin_chat_id, str(err))
+            return
+
+        if answer.is_accepted:
+            return
+
+        self.bot.send_message(
+            admin_chat_id,
+            self.strings.gi_answer_marked_as_correct.format(
+                msg_link=self.urify.get_message_link(answer.chat_id, answer.message_id)),
+            parse_mode=constants.DEFAULT_PARSE_MODE
+        )
+        question = Question.get(message_id=answer.reply_to_message_id)
+        if question:
+            self.bot.send_message(
+                question.author.uid,
+                self.strings.gi_answer_marked_as_correct_by_admin.format(
+                    msg_link=self.urify.get_message_link(answer.chat_id, answer.message_id)),
+                parse_mode=constants.DEFAULT_PARSE_MODE
+            )
+        self.notify_about_approval(answer_pk_instance, by_admin=True, force_notify=True)
 
     def notify_about_marking_as_question(self, tags: List[str], message: Message) -> bool:
         """

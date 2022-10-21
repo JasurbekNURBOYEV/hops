@@ -136,6 +136,8 @@ class Strings(object):
                                "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>"
     gi_answer_accepted_by_questioner = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> savol bergan odam " \
                                        "tomonidan to'g'ri, deb qabul qilindi"
+    gi_answer_accepted_by_admin = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> adminlar " \
+                                  "tomonidan to'g'ri, deb qabul qilindi"
 
     @property
     def gi_tags_list(self) -> str:
@@ -145,7 +147,7 @@ class Strings(object):
                "a'zolikni bekor qilish uchun <b>'Tag dashboard'</b>ga o'ting."
 
     gi_tag_dashboard_button_text = "Tag dashboard"
-    gi_accept_answer_commands = ["✅"]
+    gi_accept_answer_commands: List[str] = ["✅"]
     gi_question_tag = "savol"
     gi_answer_tag = "javob"
     gi_marked_as_question = "<a href=\"{msg_link}\">Xabar</a> savol qilib belgilandi va quyidagi taglar qo'shildi: " \
@@ -158,6 +160,16 @@ class Strings(object):
                f"belgilab qo'yildi. Iltimos, keyingi safar savol berganda uni " \
                f"{self.gi_tag_format.format(tag=self.gi_question_tag)} tagi bilan qo'shib yozing.\n\n" \
                f"Buni to'liqroq o'rganishingiz uchun maqola: {self.gi_tags_tutorial_link}"
+
+    gi_answer_marked_as_correct = "<a href=\"{msg_link}\">Javob</a> to'g'ri deb belgilab qo'yildi."
+
+    @property
+    def gi_answer_marked_as_correct_by_admin(self):
+        return "<a href=\"{msg_link}\">Javob</a> adminlar tomonidan to'g'ri deb belgilab qo'yildi. Iltimos, keyingi " \
+               "safar kimdir savolingizga to'g'ri javob bersa, o'sha xabarga javoban (reply qilib) quyidagilardan " \
+               f"birini yozing: {', '.join(self.gi_accept_answer_commands)}\n" \
+               f"Shunda javob to'g'ri deb belgilab qo'yiladi." \
+               f"Buni batafsil o'rganishingiz uchun maqola: {self.gi_tags_tutorial_link}"
 
     gi_failed_to_mark_as_question = "<a href=\"{msg_link}\">Xabar</a>ni savol qilib belgilab bo'lmadi"
 

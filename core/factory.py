@@ -260,15 +260,25 @@ class HopsBot(telebot.TeleBot):
         until_date = datetime.now().replace(tzinfo=timezone.get_current_timezone()) + timedelta(
             seconds=next_restriction_seconds)
         try:
+            topics = "\n".join(
+                [
+                    self.strings.prohibited_topic_template.format(
+                        topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
+                    )
+                    for topic, words in detected_topics
+                ]
+            )
+            if reason:
+                topics = reason
+            if reason and len(reason.split()) == 1:
+                tip = models.Tip.get(key=reason.lower())
+                if tip and len(tip.message) <= constants.TIP_AS_TOPIC_PREVIEW_HINT_MAX_SIZE:
+                    topics = self.strings.prohibited_topic_with_tip_template.format(
+                        tip=tip.key,
+                        description=tip.message,
+                    )
             warning_message = self.strings.prohibited_topic_detected.format(
-                topics="\n".join(
-                    [
-                        self.strings.prohibited_topic_template.format(
-                            topic_name=topic['name'], words=', '.join(words), hint=topic.get('hint', '')
-                        )
-                        for topic, words in detected_topics
-                    ]
-                ) if not reason else reason,
+                topics=topics,
                 user_name=self.strings.clean_html(message.from_user.first_name),
                 user_id=message.from_user.id,
                 date=(until_date.replace(tzinfo=pytz.UTC)).strftime("%Y-%m-%d %H:%M")

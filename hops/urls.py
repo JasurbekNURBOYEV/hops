@@ -19,13 +19,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 from core import views as core_views
-from core.views import show_stats, home, tags
+from core.views import show_stats, home, tags, code_view
 
 urlpatterns = [
     path(settings.CONTROL_PAGE_URL, admin.site.urls),
     path(settings.BOT_TOKEN, core_views.handle_webhook_requests),
     path('stats/', show_stats),
     path('tags/<uuid>/', tags),
+    path('code/<code_id_base64>/', code_view),
     path('api/', include("api.urls")),
     path('', home),
 ]

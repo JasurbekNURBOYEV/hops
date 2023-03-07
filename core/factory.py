@@ -4,6 +4,7 @@ This is a bot factory module which is roughly used to create full bot instance
 # --- START: IMPORTS
 # built-in
 import json
+import base64
 import random
 from datetime import datetime, timedelta
 from typing import List, Tuple, Optional, Union
@@ -897,7 +898,7 @@ def text_handler(message):
                 # but if bot just stays silent, it might seem weird
                 # so we notify user in private about this
                 try:
-                    bot.send_message(
+                    response_message = bot.send_message(
                         uid,
                         bot.strings.code_please_provide_input.format(
                             input_header=constants.DEFAULT_INPUT_HEADER),
@@ -932,7 +933,7 @@ def text_handler(message):
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
             # save the code
-            models.Code.create(
+            code = models.Code.create(
                 chat_id=message.chat.id,
                 user=user,
                 language_code=code_language,
@@ -943,8 +944,20 @@ def text_handler(message):
                 errors=errors,
                 response_message_id=response_message.message_id if response_message else None
             )
+            try:
+                # create a reply markup to redirect user to web page to show code
+                markup = types.InlineKeyboardMarkup()
+                markup.add(
+                    types.InlineKeyboardButton(
+                        text=bot.strings.code_webview_button_text,
+                        url=f"{settings.DOMAIN_URL}/code/{base64.b64encode(str(code.pk).encode()).decode()}",
+                    )
+                )
+                bot.edit_message_reply_markup(cid, response_message.message_id, reply_markup=markup)
+            except:  # noqa
+                logging.error("Could not edit reply markup for message", exc_info=True)
     elif text.startswith(constants.DEFAULT_INPUT_HEADER) and message.reply_to_message:
-        # if this is a reply, this might be reply to a code
+        # if this is a reply, this might be a reply to a code
         # which means, it can be input data for that code
         # we'll check that here
         input_data = text.replace(constants.DEFAULT_INPUT_HEADER, '', 1)

@@ -180,6 +180,16 @@ class Code(BaseLayer):
     def __str__(self):
         return f"{self.user}: {self.language_code}"
 
+    def clean_code(self) -> str:
+        """
+        Remove the first line, since it is usually just #py hashtag,
+        and return the code string.
+        """
+        second_line_index = self.string.find("\n")
+        if second_line_index > 0:
+            return self.string[second_line_index+1:]
+        return self.string
+
     class Meta:
         db_table = 'codes'
 

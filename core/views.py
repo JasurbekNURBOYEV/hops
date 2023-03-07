@@ -8,13 +8,14 @@ We'll be implementing the base control units here.
 import logging
 import traceback
 from datetime import timedelta
+from base64 import b64decode
 
 # other/external
 import telebot
 # django-specific
 from django.core.exceptions import ValidationError
 from django.db.models import F, Q, Count, Exists
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.html import format_html
@@ -243,3 +244,18 @@ def tags(request, uuid, *args, **kwargs):
             return generate_tags_dashboard(user)
 
     raise NotImplementedError()
+
+
+def code_view(request, code_id_base64, *args, **kwargs):
+    """
+    Show an existing Code in web UI, with syntax highlighting.
+    """
+    not_found = HttpResponse(status=404)
+    try:
+        decoded_id = b64decode(code_id_base64.encode())
+    except:  # noqa
+        return not_found
+    code = models.Code.get(pk=decoded_id)
+    if not code:
+        return not_found
+    return render(request, "core/code.html", context={"code": code.clean_code()})

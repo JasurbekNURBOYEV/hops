@@ -502,6 +502,11 @@ def new_chat_member_handler(message):
     # having all scenarios taken into consideration, we start the implementation one by one
     # let's check our guests
     for guest in message.new_chat_members:
+        for pattern in settings.NEW_MEMBERS_TO_KICK_PATTERNS:
+            if pattern(f"{guest.first_name} {guest.last_name}"):
+                bot.kick_chat_member(message.chat.id, guest.id)
+                bot.send_message(settings.DEV_ID, f"User kicked on entrance: {guest.first_name}")
+                continue
         # if our bot is added to a group, we check if it is allowed group
         if guest.id == bot.id:
             if message.chat.id not in constants.ALLOWED_CHATS:

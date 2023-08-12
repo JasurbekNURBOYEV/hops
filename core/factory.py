@@ -249,6 +249,7 @@ class HopsBot(telebot.TeleBot):
         :param detected_topics: list of detected topics
         :return: None
         """
+        logging.warning(f"CHAT {message.chat.id=}")
         restriction_logs = models.Restriction.filter(user=user)
         overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
         overall_seconds = overall_seconds if overall_seconds is not None else 0

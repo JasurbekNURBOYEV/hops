@@ -287,6 +287,8 @@ class HopsBot(telebot.TeleBot):
             if overall_seconds >= constants.DEFAULT_BAN_LIMIT_SECONDS:
                 # we need to ban the user
                 self.kick_chat_member(message.chat.id, message.from_user.id)
+            # try to delete message
+            bot.delete_message(message.chat.id, message.message_id)
             # we try to restrict the user
             self.restrict_chat_member(
                 message.chat.id,
@@ -298,12 +300,11 @@ class HopsBot(telebot.TeleBot):
                 can_invite_users=False,
                 until_date=int(until_date.timestamp())
             )
-            msg = self.reply_to(message, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
+            msg = self.send_message(message.chat.id, warning_message, parse_mode=constants.DEFAULT_PARSE_MODE)
             # create restriction log
             models.Restriction.create(user=user, seconds=next_restriction_seconds,
                                       restriction_message_id=msg.message_id)
-            # try to delete message
-            bot.delete_message(message.chat.id, message.message_id)
+            
             # done
         except telebot.apihelper.ApiTelegramException as e:
             # we couldn't restrict, bot might not be an admin or some kind of fatal error occured

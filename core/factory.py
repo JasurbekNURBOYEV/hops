@@ -866,6 +866,7 @@ def text_handler(message):
         detected_topics = bot.detect_prohibited_topic(text)
         if detected_topics:
             # restrict & warn
+            logging.warning(f"RESTRICTING {message.chat.id=}")
             bot.restrict_with_warning(message, detected_topics, user)
             return
 

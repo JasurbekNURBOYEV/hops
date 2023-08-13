@@ -203,3 +203,5 @@ CORS_ORIGIN_WHITELIST = [
 NEW_MEMBERS_TO_KICK_PATTERNS = [
     is_chinese_name
 ]
+
+ALLOWED_BOT_IDS = {int(botid) for botid in os.environ.get("ALLOWED_BOT_IDS").split(",")}

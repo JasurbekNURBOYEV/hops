@@ -519,7 +519,7 @@ def new_chat_member_handler(message):
                 bot.leave_chat(message.chat.id)
         # detecting and removing bots from group
         # start monarchy
-        elif guest.is_bot:
+        elif guest.is_bot and guest.id not in settings.ALLOWED_BOT_IDS:
             bot.kick_chat_member(message.chat.id, guest.id)
         # end monarchy
         elif not guest.is_bot:

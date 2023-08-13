@@ -126,8 +126,19 @@ class HopsBot(telebot.TeleBot):
             return True
         return False
 
+    def is_sender_as_channel(self, message: types.Message) -> bool:
+        if message.sender_chat and message.sender_chat.type == "channel":
+            return True
+        return False
+
     def notify_about_membership(self, message) -> None:
         try:
+            if self.is_sender_as_channel(message):
+                # ban channel & delete its message
+                logging.warning("Detected a message sent as a channel")
+                self.ban_chat_sender_chat(message.chat.id, message.sender_chat.id)
+                self.delete_message(message.chat.id, message.message_id)
+                return
             self.send_message(message.from_user.id, self.strings.you_are_not_a_member)
         except telebot.apihelper.ApiTelegramException:
             pass
@@ -249,7 +260,9 @@ class HopsBot(telebot.TeleBot):
         :param detected_topics: list of detected topics
         :return: None
         """
-        logging.warning(f"CHAT {message.chat.id=}")
+        if self.is_sender_as_channel(message):
+            # no need to restrict, channels are handled at a higher level
+            return
         restriction_logs = models.Restriction.filter(user=user)
         overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
         overall_seconds = overall_seconds if overall_seconds is not None else 0

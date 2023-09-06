@@ -182,6 +182,8 @@ PROHIBITED_TOPICS = [
     }
 ]
 
+PROHIBITED_TOPICS = []  # noqa temporarily disable prohibited topics
+
 DOMAIN_URL = os.environ.get('DOMAIN_URL')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

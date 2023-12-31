@@ -128,6 +128,8 @@ class HopsBot(telebot.TeleBot):
 
     def is_sender_as_channel(self, message: types.Message) -> bool:
         if message.sender_chat and message.sender_chat.type == "channel":
+            if str(message.sender_chat.username).lower() == "pyfaq":
+                return False
             return True
         return False
 

@@ -90,7 +90,21 @@ DEFAULT_BAN_LIMIT_SECONDS = 720 * 3600  # it is 720 hours in total, any user exc
 DEFAULT_CODE_RESPONSE_LENGTH_LIMIT = 3000
 
 # allowed groups
-ALLOWED_CHATS = [settings.MAIN_GROUP_ID, settings.TEST_GROUP_ID, settings.BOARD_GROUP_ID]
+ALLOWED_CHATS = [
+    settings.MAIN_GROUP_ID,
+    settings.TEST_GROUP_ID,
+    settings.BOARD_GROUP_ID,
+    settings.AIOGRAM_GROUP_ID,
+    settings.DJANGO_GROUP_ID,
+]
+
+ENTRANCE_GATEWAY_ENABLED_GROUPS = [
+    settings.MAIN_GROUP_ID
+]
+
+RESTRICTIONS_ENABLED_GROUPS = [
+    settings.MAIN_GROUP_ID
+]
 
 # admins
 ADMIN_ALERT_KEYWORD = '@admins'

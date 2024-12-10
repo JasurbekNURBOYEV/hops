@@ -101,14 +101,14 @@ class HopsBot(telebot.TeleBot):
 
     def is_member(self, uid: int, whitelist: List[int]) -> bool:
         """
-        To check a membership os a user
+        To check a membership as a user.
         :param uid: user id
-        :param whitelist: user ids to be considered as super users
+        :param whitelist: user ids to be considered as superusers
         :return: boolean indicating the membership
         """
-        assert isinstance(whitelist, list), "whitelist should a list object"
+        assert isinstance(whitelist, list), "whitelist should be a list object"
         if not whitelist:
-            # if list is empty, we make a defualt one which includes the developer id
+            # if list is empty, we make a default one which includes the developer id
             whitelist = [settings.DEV_ID]
         member = None
         for chat in constants.ALLOWED_CHATS:
@@ -264,6 +264,8 @@ class HopsBot(telebot.TeleBot):
         """
         if self.is_sender_as_channel(message):
             # no need to restrict, channels are handled at a higher level
+            return
+        if message.chat.id not in constants.RESTRICTIONS_ENABLED_GROUPS:
             return
         restriction_logs = models.Restriction.filter(user=user)
         overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
@@ -444,7 +446,7 @@ bot = HopsBot(token=settings.BOT_TOKEN)
 def command_handler(message):
     try:
         if not message.chat.type == 'private':
-            # users should use commands only in provate chat, if they use it in group, we just delete the message
+            # users should use commands only in private chat, if they use it in group, we just delete the message
             bot.delete_message(message.chat.id, message.message_id)
             return
 
@@ -455,7 +457,7 @@ def command_handler(message):
 
         # start command
         if command.startswith(constants.COMMAND_START) and message.chat.type == 'private':
-            # check if it is a data-binded command
+            # check if it is a data-bind command
             try:
                 data = command.replace(f"{constants.COMMAND_START} ", '', 1)
                 if not data or data == constants.COMMAND_START:
@@ -518,6 +520,8 @@ def new_chat_member_handler(message):
 
     # having all scenarios taken into consideration, we start the implementation one by one
     # let's check our guests
+    if message.chat.id not in constants.ENTRANCE_GATEWAY_ENABLED_GROUPS:
+        return
     for guest in message.new_chat_members:
         pattern_matched = False
         for pattern in settings.NEW_MEMBERS_TO_KICK_PATTERNS:

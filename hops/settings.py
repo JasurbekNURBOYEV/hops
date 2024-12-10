@@ -154,10 +154,12 @@ BOT_TOKEN = os.environ.get('BOT_TOKEN')
 MAIN_GROUP_ID = int(os.environ.get('MAIN_GROUP_ID'))
 TEST_GROUP_ID = int(os.environ.get('TEST_GROUP_ID'))
 BOARD_GROUP_ID = int(os.environ.get('BOARD_GROUP_ID'))
+DJANGO_GROUP_ID = int(os.environ.get('DJANGO_GROUP_ID', 0))
+AIOGRAM_GROUP_ID = int(os.environ.get('AIOGRAM_GROUP_ID', 0))
 TELEGRAPH_TOKEN = os.environ.get('TELEGRAPH_TOKEN')
 DEV_ID = int(os.environ.get('DEV_ID'))
 
-# add / remove / edit profibited topics
+# add / remove / edit prohibited topics
 # NOTE: provide empty list if you want to disable prohibited topics: PROHIBITED_TOPICS = []
 PROHIBITED_TOPICS = [
     {

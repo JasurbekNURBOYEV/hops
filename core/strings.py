@@ -145,7 +145,7 @@ class Strings(object):
                                        "tomonidan to'g'ri, deb qabul qilindi"
     gi_answer_accepted_by_admin = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> adminlar " \
                                   "tomonidan to'g'ri, deb qabul qilindi"
-    gi_reply_for_relayed_message = "{message}\n\n@{group_username}'dan {user_name} yozdi" \
+    gi_reply_for_relayed_message = "{message}\n\n@{group_username}'dan {user_name} yozdi\n\n" \
                                    "📩 <a href=\"{link_to_message}\">Xabarga o'tish</a>  " \
                                    "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>\n"
     @property

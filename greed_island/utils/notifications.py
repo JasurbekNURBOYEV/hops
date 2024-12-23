@@ -138,7 +138,7 @@ class QuestionNotifier(object):
                         self.strings.resize(self.question.text, max_size=1024, ellipsis_at_end=True)),
                     link_to_message=self.urify.get_message_link(self.question.chat_id, self.question.message_id),
                     thread_link=self.urify.get_message_thread_link(self.question.chat_id, self.question.message_id),
-                    user_name=self.question.author.name,
+                    user_name=self.question.author.full_name,
                 )
                 message: Message = self.bot.send_message(
                     chat_id=group.group_chat_id,

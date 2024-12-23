@@ -214,7 +214,9 @@ def text_handler(message):
         # this is a comment (a reply) to some other message, we just need to store it
         CommentRepository.register(message)
         relayed_message: RelayedMessage = RelayedMessage.objects.filter(
-            message_id=message.reply_to_message.message_id).first()
+            chat_id=message.chat.id,
+            message_id=message.reply_to_message.message_id,
+        ).first()
         if relayed_message:
             message_text = strings.gi_reply_for_relayed_message.format(
                 message=strings.clean_html(
@@ -227,7 +229,7 @@ def text_handler(message):
             )
             bot.send_message(
                 chat_id=relayed_message.relayed_from_chat_id,
-                reply_to_message_id=relayed_message.message_id,
+                reply_to_message_id=relayed_message.reply_to_message_id,
                 text=message_text,
                 parse_mode=constants.DEFAULT_PARSE_MODE,
             )

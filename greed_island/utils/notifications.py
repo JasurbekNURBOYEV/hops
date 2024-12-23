@@ -146,7 +146,7 @@ class QuestionNotifier(object):
                     parse_mode=constants.DEFAULT_PARSE_MODE,
                 )
                 RelayedMessage.objects.create(
-                    relayed_from_chat_id=settings.MAIN_GROUP_ID,
+                    relayed_from_chat_id=self.question.chat_id,
                     author=self.question.author,
                     chat_id=message.chat.id,
                     reply_to_message_id=self.question.message_id,

@@ -758,7 +758,7 @@ def text_handler(message):
     # admins alert
     if text == constants.ADMIN_ALERT_KEYWORD and message.reply_to_message and message.chat.type != 'private':
         # it has to be keyword and reply
-        # we send details to borad group
+        # we send details to board group
         try:
             chat_info = bot.get_chat(message.chat.id)
             chat_identifier = chat_info.username

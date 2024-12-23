@@ -3,7 +3,7 @@ from django.db.models import Count
 from django.utils.html import format_html
 
 from greed_island.factory import bot
-from greed_island.models import Tag, Question, Answer
+from greed_island.models import Tag, Question, Answer, RelayedMessage, TagSubscriberGroup
 from greed_island.utils.uris import URIfy
 
 urify = URIfy(bot)
@@ -64,6 +64,26 @@ class QuestionAdmin(admin.ModelAdmin):
         return format_html(
             f'<a href="{urify.get_message_link(obj.chat_id, obj.message_id)}">Xabarga o\'tish</a>'
         )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(TagSubscriberGroup)
+class TagSubscriberGroupAdmin(admin.ModelAdmin):
+    list_display = ("group_name", "tags")
+    filter_horizontal = ("tags",)
+
+    def tags(self, obj):
+        return ', '.join([i.name for i in obj.tags.all()])
+
+
+@admin.register(RelayedMessage)
+class RelayedMessageAdmin(admin.ModelAdmin):
+    list_display = ("text", "created_time")
 
     def has_add_permission(self, request):
         return False

@@ -136,11 +136,18 @@ class Strings(object):
                                "<i>{question}</i>\n\n" \
                                "📩 <a href=\"{link_to_message}\">Xabarga o'tish</a>  " \
                                "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>"
+    gi_new_question_for_group_received = "{question}\n\n@python_uz guruhidan {user_name} jo'natdi.\n\n" \
+                                         "📩 <a href=\"{link_to_message}\">Xabarga o'tish</a>  " \
+                                         "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>\n" \
+                                          "<i>(bu xabarga reply qilib #javob heshtegi bilan boshlagan holda xabar yozishingiz mumkin, " \
+                                           "uni o'sha guruhga yetkazamiz)</i>"
     gi_answer_accepted_by_questioner = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> savol bergan odam " \
                                        "tomonidan to'g'ri, deb qabul qilindi"
     gi_answer_accepted_by_admin = "Siz bergan <a href=\"{link_to_answer_message}\">javob</a> adminlar " \
                                   "tomonidan to'g'ri, deb qabul qilindi"
-
+    gi_reply_for_relayed_message = "{message}\n\n@{group_username}'dan {user_name} yozdi" \
+                                   "📩 <a href=\"{link_to_message}\">Xabarga o'tish</a>  " \
+                                   "🕵️‍♂️ <a href=\"{thread_link}\">Muhokamaga o'tish</a>\n"
     @property
     def gi_tags_list(self) -> str:
         return f"Format: {self.gi_tag_format.format(tag='tag')} (a'zolar soni).\n\n" \

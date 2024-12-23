@@ -13,7 +13,7 @@ from telebot import types
 from core import constants
 from core.models import User
 from greed_island.constants import bot, urify, strings, dog
-from greed_island.models import Tag, Answer, Comment, Question
+from greed_island.models import Tag, Answer, Comment, Question, RelayedMessage
 from greed_island.utils import notifications
 from greed_island.utils.repositories import QuestionRepository, AnswerRepository, CommentRepository
 from utils.web_ui_tools import WebButton
@@ -213,3 +213,21 @@ def text_handler(message):
     if message.reply_to_message:
         # this is a comment (a reply) to some other message, we just need to store it
         CommentRepository.register(message)
+        relayed_message: RelayedMessage = RelayedMessage.objects.filter(
+            message_id=message.reply_to_message.message_id).first()
+        if relayed_message:
+            message_text = strings.gi_reply_for_relayed_message.format(
+                message=strings.clean_html(
+                    strings.resize(message.text, max_size=1024)
+                ),
+                link_to_message=urify.get_message_link(message.chat.id, message.message_id),
+                thread_link=urify.get_message_thread_link(message.chat.id, message.message_id),
+                user_name=message.from_user.first_name,
+                group_username=message.chat.username,
+            )
+            bot.send_message(
+                chat_id=relayed_message.relayed_from_chat_id,
+                reply_to_message_id=relayed_message.message_id,
+                text=message_text,
+                parse_mode=constants.DEFAULT_PARSE_MODE,
+            )

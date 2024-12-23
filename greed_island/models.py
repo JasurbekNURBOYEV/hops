@@ -68,3 +68,20 @@ class Comment(BaseLayer, MessageMixin):
     """
     class Meta:
         db_table = 'comments'
+
+
+class TagSubscriberGroup(BaseLayer):
+    """Group and its subscribed tags."""
+    group_chat_id = models.BigIntegerField()
+    group_name = models.CharField(max_length=63)
+    tags = models.ManyToManyField(Tag, related_name="groups")
+
+    class Meta:
+        db_table = 'tag_subscriber_groups'
+
+
+class RelayedMessage(BaseLayer, MessageMixin):
+    relayed_from_chat_id = models.BigIntegerField()
+
+    class Meta:
+        db_table = 'relayed_messages'

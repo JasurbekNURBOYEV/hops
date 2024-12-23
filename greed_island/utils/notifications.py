@@ -13,8 +13,9 @@ from telebot.types import Message
 from core import constants
 from core.factory import HopsBot
 from core.strings import Strings
-from greed_island.models import Tag, Question, Answer
+from greed_island.models import Tag, Question, Answer, RelayedMessage, TagSubscriberGroup
 from greed_island.utils.uris import URIfy
+from django.conf import settings
 
 
 class TagNotifier(object):
@@ -59,7 +60,7 @@ class TagNotifier(object):
 
     def tag_removed(self) -> bool:
         """
-        For some reasons tag may get deleted. We should notify author in that case.
+        For some reason tag may get deleted. We should notify author in that case.
         :return: bool indicating the status: True - notified, False - not notified
         """
         # check if Tag instance exists
@@ -129,6 +130,30 @@ class QuestionNotifier(object):
             except ApiTelegramException:
                 # something bad happened
                 logging.error("Could not notify tag subscribers:", traceback.format_exc())
+        subscriber_groups = TagSubscriberGroup.objects.all()
+        for group in subscriber_groups:
+            try:
+                message_text = self.strings.gi_new_question_for_group_received.format(
+                    question=self.strings.clean_html(
+                        self.strings.resize(self.question.text, max_size=1024, ellipsis_at_end=True)),
+                    link_to_message=self.urify.get_message_link(self.question.chat_id, self.question.message_id),
+                    thread_link=self.urify.get_message_thread_link(self.question.chat_id, self.question.message_id)
+                )
+                message: Message = self.bot.send_message(
+                    chat_id=group.group_chat_id,
+                    text=message_text,
+                    parse_mode=constants.DEFAULT_PARSE_MODE,
+                )
+                RelayedMessage.objects.create(
+                    relayed_from_chat_id=settings.MAIN_GROUP_ID,
+                    author=self.question.author,
+                    chat_id=message.chat.id,
+                    reply_to_message_id=self.question.message_id,
+                    message_id=message.message_id,
+                    text=message_text,
+                )
+            except ApiTelegramException:
+                logging.error("Could not notify tag subscriber group")
         return True
 
     @staticmethod

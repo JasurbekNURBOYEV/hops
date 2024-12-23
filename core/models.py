@@ -28,7 +28,7 @@ class BaseManager(models.Manager):
 
 class BaseLayer(models.Model):
     """
-    This layer makes system-wide sonfigurations which tends to be effective for every single model.
+    This layer makes system-wide configurations which tends to be effective for every single model.
     It is used as a parent class for all other models.
     """
 

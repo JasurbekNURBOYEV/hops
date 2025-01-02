@@ -131,8 +131,12 @@ class QuestionNotifier(object):
                 # something bad happened
                 logging.error("Could not notify tag subscribers:", traceback.format_exc())
         subscriber_groups = TagSubscriberGroup.objects.all()
+        tags_set = {i.name for i in self.question.tags.all()}
         for group in subscriber_groups:
             try:
+                group_tags_set = {i.name for i in group.tags.all()}
+                if not (group_tags_set & tags_set):
+                    continue
                 message_text = self.strings.gi_new_question_for_group_received.format(
                     question=self.strings.clean_html(
                         self.strings.resize(self.question.text, max_size=1024, ellipsis_at_end=True)),

@@ -800,11 +800,11 @@ def text_handler(message):
     # check for tips
     if message.reply_to_message and message.text.startswith(constants.TIPS_HEADER):
         # search for this tip from database
-        key = message.text.replace(constants.TIPS_HEADER, '', 1)
+        key = message.text.replace(constants.TIPS_HEADER, '', 1).split()[0]
         tip = models.Tip.get(key=key)
         if tip:
             # we found a tip, let's send it
-            # we send it as a reply to a message which this current message was replying to
+            # we send it as a reply to a message which this current message was replying to.
             # but it might be deleted while we were searching for tips
             try:
                 bot.reply_to(message.reply_to_message, tip.message, parse_mode=constants.DEFAULT_PARSE_MODE)

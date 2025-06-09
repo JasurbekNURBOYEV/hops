@@ -88,6 +88,7 @@ class User(BaseLayer):
     magic_word = models.CharField(max_length=63, null=True, blank=True)
     welcome_message_id = models.IntegerField(null=True, blank=True)
     agreement_time = models.DateTimeField(null=True, blank=True)
+    re_welcome_counts = models.PositiveSmallIntegerField(default=0)
 
     def __str__(self):
         return f"{self.full_name or ''} {self.uid}".lstrip()

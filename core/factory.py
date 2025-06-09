@@ -631,13 +631,15 @@ def new_chat_member_handler(message):
                         )
                     else:
                         # our old comrade has finally come back, let's give a hug
-                        bot.send_message(
-                            message.chat.id, bot.strings.new_member_old_comrade_back.format(
-                                uid=guest.id, name=guest_name
-                            ),
-                            parse_mode=constants.DEFAULT_PARSE_MODE
-                        )
-
+                        if not user.re_welcome_counts > constants.RE_WELCOME_MESSAGES_LIMIT:
+                            bot.send_message(
+                                message.chat.id, bot.strings.new_member_old_comrade_back.format(
+                                    uid=guest.id, name=guest_name
+                                ),
+                                parse_mode=constants.DEFAULT_PARSE_MODE
+                            )
+                            user.re_welcome_counts += 1
+                            user.save()
                 # scenario 3: user id old, but didn't agree on rules
                 else:
                     # user hasn't agreed to rules yet

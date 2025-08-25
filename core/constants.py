@@ -103,7 +103,8 @@ ENTRANCE_GATEWAY_ENABLED_GROUPS = [
 ]
 
 RESTRICTIONS_ENABLED_GROUPS = [
-    settings.MAIN_GROUP_ID
+    settings.MAIN_GROUP_ID,
+    settings.TEST_GROUP_ID,
 ]
 
 # admins

@@ -1,8 +1,5 @@
 # --- START: IMPORTS
 
-# built-in
-import uuid
-
 # local
 from core import constants
 

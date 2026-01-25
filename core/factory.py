@@ -434,6 +434,18 @@ class HopsBot(telebot.TeleBot):
             logging.error("Error occurred while trying to send a message", exc_info=True)
             return None
 
+    def delete_message(
+        self,
+        chat_id: Union[int, str],
+        message_id: int,
+        timeout: Optional[int] = None,
+    ) -> bool:
+        try:
+            return super().delete_message(chat_id, message_id, timeout)
+        except:  # noqa
+            logging.error("Could not delete message", exc_info=True)
+            pass
+
 
 # --- START: definition of bot instance
 # initialize a bot instance

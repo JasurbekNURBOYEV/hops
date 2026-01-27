@@ -532,6 +532,7 @@ def new_chat_member_handler(message):
 
     # having all scenarios taken into consideration, we start the implementation one by one
     # let's check our guests
+    logging.info(f"New user(s) joined: {message.new_chat_members}")
     if message.chat.id not in constants.ENTRANCE_GATEWAY_ENABLED_GROUPS:
         return
     for guest in message.new_chat_members:
@@ -560,6 +561,7 @@ def new_chat_member_handler(message):
             guest_name = guest.first_name
             if guest.last_name:
                 guest_name = " ".join((guest_name, guest.last_name))
+            logging.info(f"User full name: {guest_name}")
             guest_name = bot.strings.resize(guest_name, 20)
             guest_name = bot.strings.clean_html(guest_name)
             # we choose a key for each guest, they will have to find the key in order get access to write
@@ -579,16 +581,19 @@ def new_chat_member_handler(message):
             user, new = models.User.objects.get_or_create(uid=guest.id)
             # scenario 1: user is totally new
             if new:
+                logging.info("User is new")
                 # try to restrict
                 try:
                     bot.restrict_chat_member(
-                        message.chat.id, guest.id,
+                        chat_id=message.chat.id,
+                        user_id=guest.id,
                         can_send_messages=False,
                         can_send_media_messages=False,
                         can_send_other_messages=False,
                         can_add_web_page_previews=False,
                         can_invite_users=False
                     )
+                    logging.info("Restricted the new user")
                     # restricted, now send a 'welcome' message
                     welcome_message = bot.send_message(
                         message.chat.id,
@@ -596,9 +601,11 @@ def new_chat_member_handler(message):
                         reply_markup=markup,
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
-                    # we save message id, so that we can delete or edit it when user agrees to rules
+                    logging.info("Sent welcome message")
+                    # we save message id, so that we can delete or edit it when user agrees to the rules
                     user.magic_word = key
                     user.welcome_message_id = welcome_message.message_id
+                    logging.info(f"Restricted the new user: {guest_name}")
                 except telebot.apihelper.ApiTelegramException:
                     # we probably could not restrict the user due to lack of admin rights
                     logging.error(traceback.format_exc())
@@ -632,7 +639,7 @@ def new_chat_member_handler(message):
                             )
                         )
                         # we warn the user
-                        bot.send_message(
+                        message = bot.send_message(
                             message.chat.id,
                             bot.strings.new_member_already_restricted.format(
                                 uid=guest.id,
@@ -641,17 +648,19 @@ def new_chat_member_handler(message):
                             ),
                             parse_mode=constants.DEFAULT_PARSE_MODE
                         )
+                        user.welcome_message_id = message.message_id
                     else:
                         # our old comrade has finally come back, let's give a hug
                         if not user.re_welcome_counts >= constants.RE_WELCOME_MESSAGES_LIMIT:
-                            bot.send_message(
+                            message = bot.send_message(
                                 message.chat.id, bot.strings.new_member_old_comrade_back.format(
                                     uid=guest.id, name=guest_name
                                 ),
                                 parse_mode=constants.DEFAULT_PARSE_MODE
                             )
-                            user.re_welcome_counts += 1
-                            user.save()
+                            user.welcome_message_id = message.message_id
+                    user.re_welcome_counts += 1
+                    user.save()
                 # scenario 3: user id old, but didn't agree on rules
                 else:
                     # user hasn't agreed to rules yet
@@ -674,9 +683,11 @@ def new_chat_member_handler(message):
                         parse_mode=constants.DEFAULT_PARSE_MODE
                     )
                     user.welcome_message_id = welcome_message.message_id
+                    user.re_welcome_counts += 1
             user.magic_word = key
             user.save()
     # try to delete service message
+    logging.info("Removing 'joined' service message")
     bot.delete_message(message.chat.id, message.message_id)
 
 

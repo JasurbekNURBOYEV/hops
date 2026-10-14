@@ -4,6 +4,7 @@ Board members decide what to do with them; we never delete or restrict anything 
 """
 import logging
 import traceback
+from typing import Optional
 
 import telebot
 from django.conf import settings
@@ -23,6 +24,40 @@ def _chat_identifier(chat: telebot.types.Chat) -> str:
     return f"c/{chat_id[4:] if chat_id.startswith('-100') else chat_id[1:]}"
 
 
+def parse_scam_check(text: Optional[str]) -> Optional[str]:
+    """
+    :param text: message text
+    :return: the text to score (may be empty) if the message is a !isscam command, otherwise None
+    """
+    if not text:
+        return None
+    first_line, _, candidate = text.partition('\n')
+    if first_line.strip().lower() != constants.SCAM_CHECK_COMMAND:
+        return None
+    return candidate.strip()
+
+
+def reply_scam_check(bot: telebot.TeleBot, message: telebot.types.Message, candidate: str) -> None:
+    """
+    Scores the candidate text of a !isscam command and replies with the result.
+    :param bot: TeleBot instance used to reply
+    :param message: the command message
+    :param candidate: text to score (from parse_scam_check)
+    :return: None
+    """
+    if not candidate:
+        bot.reply_to(message, constants.SCAM_CHECK_USAGE, parse_mode=core_constants.DEFAULT_PARSE_MODE)
+        return
+    probability = scam_probability(candidate)
+    verdict = constants.SCAM_CHECK_VERDICT_SCAM if probability > constants.SCAM_PROBABILITY_THRESHOLD \
+        else constants.SCAM_CHECK_VERDICT_NOT_SCAM
+    bot.reply_to(
+        message,
+        constants.SCAM_CHECK_RESULT.format(verdict=verdict, probability=probability),
+        parse_mode=core_constants.DEFAULT_PARSE_MODE,
+    )
+
+
 def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
     """
     Classifies the message (or edited message) in the update and reports it to the board group
@@ -39,6 +74,9 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
             return
         text = message.text or message.caption
         if not text or WhitelistedMessage.is_whitelisted(text):
+            return
+        if parse_scam_check(message.text) is not None:
+            # someone asked to score this text themselves, it is not their own message
             return
 
         probability = scam_probability(text)

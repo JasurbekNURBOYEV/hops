@@ -21,6 +21,7 @@ from core.strings import Strings
 from core.certificate import create_certificate
 from utils.decorators import lock_method_for_strangers
 from utils.piston import Interpreter
+from scam_detector.scanner import parse_scam_check, reply_scam_check
 
 # django-specific
 from django.core.files import File
@@ -701,6 +702,15 @@ def text_handler(message):
     cid = message.chat.id
     text = message.text
     user, new = models.User.objects.get_or_create(uid=uid)
+    # !isscam: score the text below the command. nothing else looks at it, since it is meant to
+    # look like a scam (prohibited topics, code running, steps)
+    scam_check_text = parse_scam_check(text)
+    if scam_check_text is not None:
+        try:
+            reply_scam_check(bot, message, scam_check_text)
+        except:  # noqa
+            logging.error(traceback.format_exc())
+        return
     # what we do here is basically working with steps
     # we do whatever necessary according the current state of the user
     # so, let's start by checking steps
@@ -1267,6 +1277,10 @@ def edited_message_handler(message):
     uid = message.from_user.id
     cid = message.chat.id
     user, new = models.User.objects.get_or_create(uid=uid)
+
+    if parse_scam_check(message.text) is not None:
+        # an edited !isscam command: its text is a scam sample, not the sender's own message
+        return
 
     # when message is edited, it migh mean:
     # - code has been edited -> we need to re-run it & edit our response

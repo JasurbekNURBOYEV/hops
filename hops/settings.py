@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'core',
     'greed_island',
+    'scam_detector',
 ]
 
 MIDDLEWARE = [

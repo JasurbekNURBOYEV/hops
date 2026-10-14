@@ -21,3 +21,4 @@ class UserAdmin(admin.ModelAdmin):
 
 admin.site.register(models.Certificate)
 admin.site.register(models.Tip)
+admin.site.register(models.WhitelistedMessage)

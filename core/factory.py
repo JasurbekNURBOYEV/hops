@@ -213,6 +213,8 @@ class HopsBot(telebot.TeleBot):
         :param text: message text
         :return: collection of detected keywords
         """
+        if models.WhitelistedMessage.is_whitelisted(text):
+            return []
         text = text.lower()
         topics = settings.PROHIBITED_TOPICS
         detected_topics = []
@@ -270,7 +272,7 @@ class HopsBot(telebot.TeleBot):
         restriction_logs = models.Restriction.filter(user=user)
         overall_seconds = restriction_logs.aggregate(Sum('seconds')).get('seconds__sum')
         overall_seconds = overall_seconds if overall_seconds is not None else 0
-        recent_log = restriction_logs.last()
+        recent_log = restriction_logs.first()
         if recent_log:
             last_restriction_seconds = recent_log.seconds
         else:
@@ -340,7 +342,7 @@ class HopsBot(telebot.TeleBot):
         :param user:
         :return:
         """
-        certificate = models.Certificate.filter(user=user).last()
+        certificate = models.Certificate.filter(user=user).first()
         if certificate:
             for name, percentage, limit in constants.TEST_CLASSES_BY_RESULT:
                 if certificate.percentage / 100 >= percentage:
@@ -845,7 +847,7 @@ def text_handler(message):
                 # work on "Read-Only" stuff
                 # to un-restrict the user
                 restriction = models.Restriction.filter(
-                    restriction_message_id=message.reply_to_message.message_id).last()
+                    restriction_message_id=message.reply_to_message.message_id).first()
                 if restriction:
                     # we try to un-restrict
                     if restriction.seconds > 0:
@@ -879,8 +881,8 @@ def text_handler(message):
                 target_user, new = models.User.objects.get_or_create(uid=message.reply_to_message.from_user.id)
                 if target_user:
                     try:
-                        certificate = models.Certificate.filter(user=target_user).last()
-                        last_restriction = models.Restriction.filter(user=target_user).last()
+                        certificate = models.Certificate.filter(user=target_user).first()
+                        last_restriction = models.Restriction.filter(user=target_user).first()
                         last_restriction_time = (0, 0)
                         if last_restriction:
                             delta_object = timedelta(seconds=last_restriction.seconds)
@@ -922,7 +924,7 @@ def text_handler(message):
         # if this is private chat, we don't set limitations & ask for certificate
         should_run = True
         if message.chat.type != 'private':
-            last_certificate = models.Certificate.filter(user=user).last()
+            last_certificate = models.Certificate.filter(user=user).first()
             if not last_certificate:
                 should_run = False
                 # user has no certificate, let's offer him/her a test

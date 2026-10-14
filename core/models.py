@@ -17,10 +17,8 @@ class BaseManager(models.Manager):
     to be ordered by created time (descending), therefore it creates a LIFO order,
     causing the recent ones appear first in results.
     """
-    use_for_related_fields = True
-
     def get_queryset(self):
-        super(BaseManager, self).get_queryset().order_by('-created_time')
+        return super(BaseManager, self).get_queryset().order_by('-created_time')
 
 
 class BaseLayer(models.Model):
@@ -30,9 +28,9 @@ class BaseLayer(models.Model):
     """
 
     # let's configure managers
-    default_manager = BaseManager
-    objects = BaseManager
-    all_objects = models.Manager
+    # the first declared manager becomes the default one (also used for related fields)
+    objects = BaseManager()
+    all_objects = models.Manager()
 
     # all models are going to have following two fields
     created_time = models.DateTimeField(default=timezone.now)
@@ -216,3 +214,25 @@ class Tip(BaseLayer):
 
     class Meta:
         db_table = 'tips'
+
+
+class WhitelistedMessage(BaseLayer):
+    authorizer = models.ForeignKey(User, related_name="whitelisted_messages", on_delete=models.CASCADE)
+    text = models.TextField()
+
+    def __str__(self):
+        return f"{self.authorizer} - {self.text[:15]}..."
+
+    @classmethod
+    def is_whitelisted(cls, text: str) -> bool:
+        """
+        Whitelisted messages are ignored by the scam and prohibited topics detectors
+        :param text: message text (or caption)
+        :return: True if the exact text (ignoring surrounding whitespace) is whitelisted
+        """
+        if not text:
+            return False
+        return cls.filter(text=text.strip()).exists()
+
+    class Meta:
+        db_table = 'whitelisted_messages'

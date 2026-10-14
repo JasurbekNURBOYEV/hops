@@ -14,11 +14,10 @@ from base64 import b64decode
 import telebot
 # django-specific
 from django.core.exceptions import ValidationError
-from django.db.models import F, Q, Count, Exists
+from django.db.models import F, Q, Count
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_exempt
 
 # local
@@ -26,6 +25,7 @@ from core import models
 from core.factory import bot
 from core.models import User, Tip
 from greed_island.factory import bot as gi_bot, strings
+from scam_detector.scanner import scan_update
 
 # --- END: IMPORTS
 from greed_island.models import Tag
@@ -68,6 +68,8 @@ def handle_webhook_requests(request):
 
         json_string = request.body.decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
+        # scan before the bots process the update: they may delete the message (e.g. prohibited topics)
+        scan_update(bot, update)
         try:
             request_id = bot.generate_unique_id(json_string=json_string)
             # set-up initial configs/data

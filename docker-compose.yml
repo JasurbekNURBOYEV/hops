@@ -13,6 +13,7 @@ services:
     networks:
       - internal
       - global
+    restart: on-failure
 #  bubbler:
 #    build: ./bubbler
 #    env_file:

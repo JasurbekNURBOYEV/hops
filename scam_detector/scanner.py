@@ -1,6 +1,6 @@
 """
 Scans incoming group messages and reports likely scams to the board group.
-Board members decide what to do with them; we never delete or restrict anything here.
+Board members decide what to do with them; a message is only deleted when one of them presses the remove button.
 """
 import logging
 import traceback
@@ -22,6 +22,17 @@ def _chat_identifier(chat: telebot.types.Chat) -> str:
         return chat.username
     chat_id = str(chat.id)
     return f"c/{chat_id[4:] if chat_id.startswith('-100') else chat_id[1:]}"
+
+
+def _remove_markup(chat_id: int, message_id: int) -> telebot.types.InlineKeyboardMarkup:
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(
+        telebot.types.InlineKeyboardButton(
+            text=constants.REMOVE_BUTTON_TEXT,
+            callback_data=constants.CALLBACK_DATA_REMOVE_TEMPLATE.format(chat_id=chat_id, message_id=message_id),
+        )
+    )
+    return markup
 
 
 def parse_scam_check(text: Optional[str]) -> Optional[str]:
@@ -96,7 +107,36 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
             ),
             parse_mode=core_constants.DEFAULT_PARSE_MODE,
             reply_to_message_id=forwarded.message_id,
+            reply_markup=_remove_markup(message.chat.id, message.message_id),
         )
     except Exception:  # noqa
         # scanning must never break regular update processing
         logging.error(traceback.format_exc())
+
+
+def handle_remove_callback(bot: telebot.TeleBot, call: telebot.types.CallbackQuery, data: str) -> None:
+    """
+    Deletes the reported message from its group when a board member presses the remove button on the report.
+    :param bot: TeleBot instance
+    :param call: callback query of the remove button
+    :param data: callback data without the header ("<chat_id>|<message_id>")
+    :return: None
+    """
+    if call.message.chat.id != settings.BOARD_GROUP_ID:
+        return
+    chat_id, message_id = map(int, data.split(core_constants.CALLBACK_DATA_SEPARATOR))
+    # our delete_message returns None (and logs) when deletion fails, e.g. the message is already gone
+    deleted = bot.delete_message(chat_id, message_id)
+    if not deleted:
+        bot.answer_callback_query(call.id, text=constants.REMOVE_FAILED, show_alert=True)
+        return
+    logging.info(f'Scam message {message_id} in chat {chat_id} removed by {call.from_user.id}')
+    bot.edit_message_text(
+        text=call.message.html_text + constants.REMOVED_BY.format(
+            user_id=call.from_user.id,
+            user_name=Strings.clean_html(call.from_user.first_name),
+        ),
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        parse_mode=core_constants.DEFAULT_PARSE_MODE,
+    )

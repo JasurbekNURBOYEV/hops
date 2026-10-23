@@ -21,3 +21,10 @@ POTENTIAL_SCAM_REPORT = "⚠️ <b>Potensial scam xabar</b>\n\n" \
                         "Ehtimollik: <b>{probability:.1%}</b>\n" \
                         "Muallif: <a href=\"tg://user?id={user_id}\">{user_name}</a> (<code>{user_id}</code>)\n" \
                         "Xabar: <a href=\"https://t.me/{chat_identifier}/{message_id}\">havola</a>\n\n"
+
+# remove button on the report: deletes the reported message from its group
+CALLBACK_DATA_HEADER_REMOVE = 'scamremove'
+CALLBACK_DATA_REMOVE_TEMPLATE = CALLBACK_DATA_HEADER_REMOVE + '_{chat_id}|{message_id}'
+REMOVE_BUTTON_TEXT = "🗑 F"
+REMOVE_FAILED = "Xabarni o'chirib bo'lmadi (allaqachon o'chirilgan yoki botda huquq yo'q)."
+REMOVED_BY = "\n\n🗑 <a href=\"tg://user?id={user_id}\">{user_name}</a> tomonidan o'chirildi"

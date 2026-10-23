@@ -21,7 +21,8 @@ from core.strings import Strings
 from core.certificate import create_certificate
 from utils.decorators import lock_method_for_strangers
 from utils.piston import Interpreter
-from scam_detector.scanner import parse_scam_check, reply_scam_check
+from scam_detector import constants as scam_constants
+from scam_detector.scanner import parse_scam_check, reply_scam_check, handle_remove_callback
 
 # django-specific
 from django.core.files import File
@@ -1266,6 +1267,9 @@ def callback_handler(call):
                 text=bot.strings.test_start_button_clicked_by_wrong_user,
                 show_alert=True
             )
+    elif header == scam_constants.CALLBACK_DATA_HEADER_REMOVE:
+        # board member wants the reported scam message removed from the group
+        handle_remove_callback(bot, call, data)
     # this is to ensure that we answered to the call
     bot.answer_callback_query(call.id)
 

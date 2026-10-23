@@ -30,5 +30,5 @@ CALLBACK_DATA_HEADER_REMOVE = 'scamremove'
 CALLBACK_DATA_REMOVE_TEMPLATE = CALLBACK_DATA_HEADER_REMOVE + '_{chat_id}|{message_id}'
 REMOVE_BUTTON_TEXT = "🗑 F"
 REMOVE_FAILED = "Xabarni o'chirib bo'lmadi (allaqachon o'chirilgan yoki botda huquq yo'q)."
-REMOVED_BY = "\n🗑 <a href=\"tg://user?id={user_id}\">{user_name}</a> tomonidan o'chirildi"
-REMOVED_AUTOMATICALLY = "\n🗑 Avtomatik o'chirildi"
+REMOVED_BY = "🗑 <a href=\"tg://user?id={user_id}\">{user_name}</a> tomonidan o'chirildi"
+REMOVED_AUTOMATICALLY = "🗑 Avtomatik o'chirildi"

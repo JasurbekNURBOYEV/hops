@@ -1,6 +1,7 @@
 """
 Scans incoming group messages and reports likely scams to the board group.
-Board members decide what to do with them; a message is only deleted when one of them presses the remove button.
+Messages above the remove threshold are deleted right away; the rest are left to the board members,
+who can delete them with the remove button on the report.
 """
 import logging
 import traceback
@@ -60,8 +61,12 @@ def reply_scam_check(bot: telebot.TeleBot, message: telebot.types.Message, candi
         bot.reply_to(message, constants.SCAM_CHECK_USAGE, parse_mode=core_constants.DEFAULT_PARSE_MODE)
         return
     probability = scam_probability(candidate)
-    verdict = constants.SCAM_CHECK_VERDICT_SCAM if probability > constants.SCAM_PROBABILITY_THRESHOLD \
-        else constants.SCAM_CHECK_VERDICT_NOT_SCAM
+    if probability > constants.SCAM_REMOVE_THRESHOLD:
+        verdict = constants.SCAM_CHECK_VERDICT_SCAM
+    elif probability > constants.SCAM_REPORT_THRESHOLD:
+        verdict = constants.SCAM_CHECK_VERDICT_SUSPICIOUS
+    else:
+        verdict = constants.SCAM_CHECK_VERDICT_NOT_SCAM
     bot.reply_to(
         message,
         constants.SCAM_CHECK_RESULT.format(verdict=verdict, probability=probability),
@@ -91,11 +96,17 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
             return
 
         probability = scam_probability(text)
-        if probability <= constants.SCAM_PROBABILITY_THRESHOLD:
+        if probability <= constants.SCAM_REPORT_THRESHOLD:
             return
 
         logging.info(f'Potential scam ({probability:.2%}) in chat {message.chat.id}, message {message.message_id}')
+        # forward before deleting, otherwise there is nothing left to show the board
         forwarded = bot.forward_message(settings.BOARD_GROUP_ID, message.chat.id, message.message_id)
+        # our delete_message returns None (and logs) when deletion fails, e.g. the bot has no rights there
+        removed = probability > constants.SCAM_REMOVE_THRESHOLD and bot.delete_message(
+            message.chat.id, message.message_id)
+        if removed:
+            logging.info(f'Scam message {message.message_id} in chat {message.chat.id} removed automatically')
         bot.send_message(
             settings.BOARD_GROUP_ID,
             constants.POTENTIAL_SCAM_REPORT.format(
@@ -104,10 +115,11 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
                 user_name=Strings.clean_html(message.from_user.first_name),
                 chat_identifier=_chat_identifier(message.chat),
                 message_id=message.message_id,
-            ),
+            ) + (constants.REMOVED_AUTOMATICALLY if removed else ''),
             parse_mode=core_constants.DEFAULT_PARSE_MODE,
             reply_to_message_id=forwarded.message_id,
-            reply_markup=_remove_markup(message.chat.id, message.message_id),
+            # removed messages need no decision, the rest are left to the board
+            reply_markup=None if removed else _remove_markup(message.chat.id, message.message_id),
         )
     except Exception:  # noqa
         # scanning must never break regular update processing

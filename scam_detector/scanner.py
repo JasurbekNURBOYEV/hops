@@ -11,7 +11,7 @@ import telebot
 from django.conf import settings
 
 from core import constants as core_constants
-from core.models import WhitelistedMessage
+from core.models import ScamMessage, WhitelistedMessage
 from core.strings import Strings
 from scam_detector import constants
 from scam_detector.classifier import scam_probability
@@ -36,17 +36,53 @@ def _remove_markup(chat_id: int, message_id: int) -> telebot.types.InlineKeyboar
     return markup
 
 
+def _parse_command(text: Optional[str], command: str) -> Optional[str]:
+    """
+    :param text: message text
+    :param command: expected first line of the message
+    :return: the text below the command (may be empty) if the message is that command, otherwise None
+    """
+    if not text:
+        return None
+    first_line, _, rest = text.partition('\n')
+    if first_line.strip().lower() != command:
+        return None
+    return rest.strip()
+
+
 def parse_scam_check(text: Optional[str]) -> Optional[str]:
     """
     :param text: message text
     :return: the text to score (may be empty) if the message is a !isscam command, otherwise None
     """
-    if not text:
-        return None
-    first_line, _, candidate = text.partition('\n')
-    if first_line.strip().lower() != constants.SCAM_CHECK_COMMAND:
-        return None
-    return candidate.strip()
+    return _parse_command(text, constants.SCAM_CHECK_COMMAND)
+
+
+def parse_add_scam(text: Optional[str]) -> Optional[str]:
+    """
+    :param text: message text
+    :return: the scam text to save (may be empty) if the message is an !addscam command, otherwise None
+    """
+    return _parse_command(text, constants.ADD_SCAM_COMMAND)
+
+
+def reply_add_scam(bot: telebot.TeleBot, message: telebot.types.Message, scam_text: str) -> None:
+    """
+    Saves the scam text of an !addscam command and replies with the result.
+    The caller is responsible for checking that the sender is allowed to add scam messages.
+    :param bot: TeleBot instance used to reply
+    :param message: the command message
+    :param scam_text: text to save (from parse_add_scam)
+    :return: None
+    """
+    if not scam_text:
+        reply = constants.ADD_SCAM_USAGE
+    elif ScamMessage.add(scam_text):
+        logging.info(f'Scam message added by {message.from_user.id}')
+        reply = constants.ADD_SCAM_ADDED
+    else:
+        reply = constants.ADD_SCAM_EXISTS
+    bot.reply_to(message, reply, parse_mode=core_constants.DEFAULT_PARSE_MODE)
 
 
 def reply_scam_check(bot: telebot.TeleBot, message: telebot.types.Message, candidate: str) -> None:
@@ -94,6 +130,9 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
         if parse_scam_check(message.text) is not None:
             # someone asked to score this text themselves, it is not their own message
             return
+        if parse_add_scam(message.text) is not None and bot.is_commander(message.chat.id, message.from_user.id):
+            # an admin is saving a scam sample, it is not their own message
+            return
 
         probability = scam_probability(text)
         if probability <= constants.SCAM_REPORT_THRESHOLD:
@@ -107,6 +146,7 @@ def scan_update(bot: telebot.TeleBot, update: telebot.types.Update) -> None:
             message.chat.id, message.message_id)
         if removed:
             logging.info(f'Scam message {message.message_id} in chat {message.chat.id} removed automatically')
+            ScamMessage.add(text)
         bot.send_message(
             settings.BOARD_GROUP_ID,
             constants.POTENTIAL_SCAM_REPORT.format(
@@ -143,6 +183,10 @@ def handle_remove_callback(bot: telebot.TeleBot, call: telebot.types.CallbackQue
         bot.answer_callback_query(call.id, text=constants.REMOVE_FAILED, show_alert=True)
         return
     logging.info(f'Scam message {message_id} in chat {chat_id} removed by {call.from_user.id}')
+    # the report replies to the forwarded copy, which still has the text of the removed message
+    forwarded = call.message.reply_to_message
+    if forwarded:
+        ScamMessage.add(forwarded.text or forwarded.caption)
     bot.edit_message_text(
         text=call.message.html_text + constants.REMOVED_BY.format(
             user_id=call.from_user.id,

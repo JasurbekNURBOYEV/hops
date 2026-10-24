@@ -236,3 +236,28 @@ class WhitelistedMessage(BaseLayer):
 
     class Meta:
         db_table = 'whitelisted_messages'
+
+
+class ScamMessage(BaseLayer):
+    """
+    Known scam messages: removed automatically, removed by the board or added by admins via !addscam
+    """
+    text = models.TextField(unique=True)
+
+    def __str__(self):
+        return f"{self.text[:30]}..."
+
+    @classmethod
+    def add(cls, text: str) -> bool:
+        """
+        :param text: scam message text (or caption)
+        :return: True if the text (ignoring surrounding whitespace) was added, False if empty or already stored
+        """
+        text = (text or '').strip()
+        if not text:
+            return False
+        _, created = cls.objects.get_or_create(text=text)
+        return created
+
+    class Meta:
+        db_table = 'scam_messages'

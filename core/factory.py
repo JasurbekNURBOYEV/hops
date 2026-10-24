@@ -22,7 +22,9 @@ from core.certificate import create_certificate
 from utils.decorators import lock_method_for_strangers
 from utils.piston import Interpreter
 from scam_detector import constants as scam_constants
-from scam_detector.scanner import parse_scam_check, reply_scam_check, handle_remove_callback
+from scam_detector.scanner import (
+    parse_scam_check, reply_scam_check, parse_add_scam, reply_add_scam, handle_remove_callback,
+)
 
 # django-specific
 from django.core.files import File
@@ -712,6 +714,15 @@ def text_handler(message):
         except:  # noqa
             logging.error(traceback.format_exc())
         return
+    # !addscam: admins save the text below the command as a scam message. from anyone else it is
+    # a regular message, otherwise scammers could prefix their messages with it to skip the checks
+    add_scam_text = parse_add_scam(text)
+    if add_scam_text is not None and bot.is_commander(cid, uid):
+        try:
+            reply_add_scam(bot, message, add_scam_text)
+        except:  # noqa
+            logging.error(traceback.format_exc())
+        return
     # what we do here is basically working with steps
     # we do whatever necessary according the current state of the user
     # so, let's start by checking steps
@@ -1284,6 +1295,9 @@ def edited_message_handler(message):
 
     if parse_scam_check(message.text) is not None:
         # an edited !isscam command: its text is a scam sample, not the sender's own message
+        return
+    if parse_add_scam(message.text) is not None and bot.is_commander(cid, uid):
+        # same for an admin's edited !addscam command
         return
 
     # when message is edited, it migh mean:

@@ -20,6 +20,14 @@ SCAM_CHECK_VERDICT_SCAM = "⚠️ <b>Scam bo'lishi ehtimoli yuqori</b>"
 SCAM_CHECK_VERDICT_SUSPICIOUS = "❔ <b>Scam bo'lishi mumkin</b>"
 SCAM_CHECK_VERDICT_NOT_SCAM = "✅ <b>Scamga o'xshamaydi</b>"
 
+# admins save scam messages the same way: the first line is the command, the rest is the scam text
+ADD_SCAM_COMMAND = '!addscam'
+
+ADD_SCAM_USAGE = "Foydalanish: birinchi qatorga <code>!addscam</code>, keyingi qatorlarga " \
+                 "scam xabar matnini yozing."
+ADD_SCAM_ADDED = "✅ Scam xabar saqlandi."
+ADD_SCAM_EXISTS = "ℹ️ Bu scam xabar allaqachon saqlangan."
+
 POTENTIAL_SCAM_REPORT = "⚠️ <b>Potensial scam xabar</b>\n\n" \
                         "Ehtimollik: <b>{probability:.1%}</b>\n" \
                         "Muallif: <a href=\"tg://user?id={user_id}\">{user_name}</a> (<code>{user_id}</code>)\n" \
